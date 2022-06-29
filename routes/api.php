@@ -74,7 +74,7 @@ Route::controller(ProductController::class)->group(function () {
     Route::get('get_product_fresh_farm', 'getProductFreshFarmList');
     Route::post('get_search_product', 'getSearchProduct');
     Route::get('get_product_detail/{id}', 'getProductDetails');
-    Route::get('get_time_slot', 'getTimeSlot');
+    Route::post('get_time_slot', 'getTimeSlot');
 });
 
 /*

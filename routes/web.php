@@ -75,8 +75,11 @@ Route::group(['prefix' => 'admin'], function () {
             Route::group(['prefix' => 'orders'], function () {
                 Route::get('new', 'newOrderList')->name('admin.orders.new');
                 Route::get('old', 'oldOrderList')->name('admin.orders.old');
-                Route::post('orders/asign-driver', 'asignDriver')->name('admin.orders.asign-driver');
-                Route::get('orders/order-product/{id}', 'orderProduct')->name('admin.orders.order-product');
+                Route::post('asign-driver', 'asignDriver')->name('admin.orders.asign-driver');
+                Route::get('order-product/{id}', 'orderProduct')->name('admin.orders.order-product');
+                Route::get('order-detail/pdf/{id}', 'generatePDFOrderDetail')->name('admin.orders.order-detail-pdf');
+                Route::get('new-order-dwonload-csv', 'newOrderDownloadCsv')->name('admin.order.download-new-csv');
+                Route::get('old-order-dwonload-csv', 'oldOrderDownloadCsv')->name('admin.order.download-old-csv');
             });
             Route::get('supprots/index', 'userSupport')->name('admin.supports.index');
         });

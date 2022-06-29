@@ -178,7 +178,8 @@ class ProductController extends BaseController
             $validator = Validator::make(
                 $request->all(),
                 [
-                    'coupon_code'             => 'required|exists:coupons,coupon_code'
+                    'coupon_code'             => 'required|exists:coupons,coupon_code',
+                    'device_token'            => 'required'
                 ],
                 [
                     'coupon_code.required'    => 'Coupon Code should be required'
@@ -241,6 +242,7 @@ class ProductController extends BaseController
             $save->coupon_amount = $checkExist->coupon_amount;
             $save->cart_id       = $carts->id;
             $save->user_id       = auth()->user()->id;
+            $save->device_token  = $request->device_token;
             $save->coupon_code   = $checkExist->coupon_code;
             $save->save();
 
@@ -256,6 +258,10 @@ class ProductController extends BaseController
             $products  = Product::find($request->product_id);
             if (!isset($products) || empty($products)) {
                 return $this->sendFailed('PRODUCT ID NOT FOUND', 200);
+            }
+            $couponExist = CouponCartMapping::where('device_token', $request->device_token)->first();
+            if (isset($couponExist->id)) {
+                $couponExist->delete();
             }
             // CHEK THIS PRODUCT ALREADY ADDED OR NOT IN CART
             $checkExist = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token])->first();
@@ -313,7 +319,7 @@ class ProductController extends BaseController
             $get_cart_data1  = Cart::where(['device_token' => $request->device_token])->get();
             $product_count   = count($get_cart_data1);
 
-            return $this->sendSuccess('PRODCUT ADDED IN CARD SUCCESSFULLY',['product_count' => $product_count]);
+            return $this->sendSuccess('PRODCUT ADDED IN CARD SUCCESSFULLY', ['product_count' => $product_count]);
         } catch (\Throwable $e) {
             return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
         }
@@ -327,6 +333,10 @@ class ProductController extends BaseController
             if (!$checkExist) {
                 return $this->sendFailed('PRODUCT NOT FOUND', 200);
             }
+            $couponExist = CouponCartMapping::where('device_token', $request->device_token)->first();
+            if (isset($couponExist->id)) {
+                $couponExist->delete();
+            }
             $checkExist->delete();
             return $this->sendSuccess('PRODUCT DELETE IN CART SUCCESSFULLY');
         } catch (\Throwable $e) {
@@ -339,7 +349,6 @@ class ProductController extends BaseController
     public function deleteAddOnServiceInCart(Request $request)
     {
         try {
-
             $error_message = [
                 'cart_id.required'     => 'Cart Id should be required',
             ];
@@ -357,6 +366,12 @@ class ProductController extends BaseController
             if (!$checkExist) {
                 return $this->sendFailed('ADD ON SERVICE NOT FOUND', 200);
             }
+
+            $couponExist = CouponCartMapping::where('device_token', $request->device_token)->first();
+            if (isset($couponExist->id)) {
+                $couponExist->delete();
+            }
+
             $checkExist->delete();
             return $this->sendSuccess('ADD ON SERVICE DELETE IN CART SUCCESSFULLY');
         } catch (\Throwable $e) {
@@ -470,14 +485,96 @@ class ProductController extends BaseController
         }
     }
 
-    public function getTimeSlot()
+    public function getTimeSlot(Request $request)
     {
         try {
             $cagetory_list = TimeSlot::select('from', 'to', 'id')->get();
             if (!isset($cagetory_list) || count($cagetory_list) == 0) {
                 return $this->sendFailed('TIMESLOT NOT FOUND', 200);
             }
-            return $this->sendSuccess('TIMESLOT GET SUCCESSFULLY', TimeSlotResource::collection($cagetory_list));
+
+            $get_cart_data  = Cart::where('user_id', $request->user_id)->get();
+            if (!isset($get_cart_data) || count($get_cart_data) == 0) {
+                // return $this->sendFailed('PRODUCT NOT FOUND IN CART', 200);
+            }
+
+            if (isset($request->user_id) && $request->user_id != '') {
+                Cart::where('user_id', $request->user_id)->update(['user_id' => $request->user_id]);
+                AddOnServiceMappingInCart::where('user_id', $request->user_id)->update(['user_id' => $request->user_id]);
+            }
+
+            $categories =  Cart::where('user_id', $request->user_id)->groupBy('category_id')->pluck('category_id');
+            $product_data = [];
+            $product_array = [];
+            $category_name = '';
+            $total_price_product = 0;
+            foreach ($categories as $key =>  $category) {
+                $category_name =  Category::where('id', $category)->value('name');
+                $cart_data  =  Cart::where('user_id', $request->user_id)->where('category_id', $category)->get();
+                foreach ($cart_data as $key1 => $cart) {
+                    $p_data = Product::find($cart->product_id);
+                    $add_on_service_ids  = AddOnServiceMappingInCart::where(['cart_id' => $cart->id])->pluck('add_on_service_id')->join(',');
+
+                    $add_on_service_arr  = AddOnService::select('id', 'price', 'title')->whereIn('id', explode(',', $add_on_service_ids))->get()->toArray();
+                    $add_on_service_price = array_sum(array_column($add_on_service_arr, 'price'));
+                    $p_image        =  asset('storage/app/public/product_images/' . $p_data->image);
+                    $product_data[$key1] = ['cart_id' => $cart->id, 'product_id' => $p_data->id, 'product_name' => $p_data->name, 'product_image' => $p_image, 'per_product_price' => $p_data->price, 'product_total_per' => $p_data->price * $cart->product_quantity, 'product_quantity' => $cart->product_quantity, 'category_id' => $category, 'add_on_services' => $add_on_service_arr, 'add_on_service_price' => $add_on_service_price];
+                    $total_price_product = $total_price_product + $p_data->price * $cart->product_quantity;
+                }
+                $product_array[$key]['category_name'] = $category_name;
+                $product_array[$key]['product'] = $product_data;
+            }
+            $total_add_on_service_ids   = AddOnServiceMappingInCart::where(['user_id' => $request->user_id])->get('add_on_service_id');
+
+            $total_add_on_service_price = 0;
+            foreach ($total_add_on_service_ids as $key => $value2) {
+                $serice = AddOnService::find($value2->add_on_service_id);
+                $total_add_on_service_price = $total_add_on_service_price + $serice->price;
+            }
+
+            $total_sum = 0;
+            $get_cart_data1  = Cart::where(['user_id' => $request->user_id])->get();
+            $product_count   = count($get_cart_data1);
+            foreach ($get_cart_data1 as $key => $value1) {
+                $products = Product::find($value1->product_id);
+                $total_sum = $total_sum + $products->price * $value1->product_quantity;
+            }
+
+            $get_address   = Address::where('user_id', $request->user_id)->where('is_favorite', 1)->first();
+            $address       = [
+                'address_id'     => isset($get_address->id) ? $get_address->id : '',
+                'address'        => isset($get_address->address) ? $get_address->address : '',
+                'address_type'   => isset($get_address->type) ? $get_address->type : '',
+                'pincode'        => isset($get_address->pincode) ? $get_address->pincode : '',
+                'location'       => isset($get_address->location) ? $get_address->location : '',
+                'latitude'       => isset($get_address->latitude) ? $get_address->latitude : '',
+                'longitude'      => isset($get_address->longitude) ? $get_address->longitude : '',
+                'name'           => isset($get_address->name) ? $get_address->name : '',
+                'mobile'         => isset($get_address->mobile) ? $get_address->mobile : '',
+                'email'          => isset($get_address->email) ? $get_address->email : '',
+            ];
+
+            // $delivery_charge = Setting::first();
+            $checkExist  = ZipCode::where('zipcode', @$get_address->pincode)->first();
+            $discount    = 0;
+            $discount    = CouponCartMapping::where(['user_id' => $request->user_id])->value('coupon_amount');
+
+            if (!isset($discount) || $discount == '') {
+                $discount = 0;
+            }
+
+            $coupon_code = CouponCartMapping::where(['user_id' => $request->user_id])->value('coupon_code');
+
+            if (!isset($coupon_code) || $coupon_code == '') {
+                $coupon_code = '';
+            }
+
+            $delivery_charge                = isset($checkExist->delivery_charge) ? $checkExist->delivery_charge : 0;
+            $total_amount = $delivery_charge + $total_sum + $total_add_on_service_price - $discount;
+
+            // $data = ['cart_data' => $product_array, 'product_count' => $product_count, 'add_on_service_charge' => $total_add_on_service_price, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'address' => $address];
+
+            return $this->sendSuccess('TIMESLOT GET SUCCESSFULLY', ['sloat' => TimeSlotResource::collection($cagetory_list), 'add_on_service_charge' => $total_add_on_service_price, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'address' => $address]);
         } catch (\Throwable $e) {
             return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
         }

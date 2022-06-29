@@ -25,6 +25,8 @@
                                     <th>Id</th>
                                     <th>Order id</th>
                                     <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
                                     <th>Message</th>
                                     <th>Created At</th>
                                 </tr>
@@ -35,6 +37,8 @@
                                     <td><strong>{{$val->id}}</strong></a></td>
                                     <td>{{$val->order_id}}</td>
                                     <td>{{$val->users->name ?? ''}}</td>
+                                    <td>{{$val->users->email ?? ''}}</td>
+                                    <td>{{$val->users->mobile ?? ''}}</td>
                                     <td>{{$val->reason}}</td>
                                     <td>{{$val->created_at}}</td>
                                 </tr>

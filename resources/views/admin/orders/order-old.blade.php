@@ -19,6 +19,37 @@
                 </div>
             </div>
         </div> <!-- Row end  -->
+
+        <form action="{{route('admin.orders.old')}}" method="GET">
+
+            <div class="widget-content widget-content-area">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6">
+                        {{ Form::label('From Date', null, []) }}
+                        {{ Form::date('start_date',$request->start_date,['class' => 'form-control date','placeholder' => "Select Order Date"]) }}
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        {{ Form::label('To Date', null, []) }}
+                        {{ Form::date('end_date',$request->end_date,['class' => 'form-control date','placeholder' => "Checkout Date"]) }}
+                    </div>
+                    <div class="col-lg-3 col-md-6 mt-3">
+                        <button class="btn btn-primary" type="submit">
+                            Filter
+                        </button>
+                        <a href="{{route('admin.orders.old')}}">
+                            <button class="btn btn-danger" type="button" id="">
+                                Clear
+                            </button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+        <br>
+        <a href="{{route('admin.order.download-old-csv')}}?{{($_SERVER['QUERY_STRING'])}}"><button class="btn btn-sm btn-primary" type="button"> CSV </button></a>
+        <br>
+        <br>
         <div class="row g-3 mb-3" style="width: 165%;">
             <div class="col-md-12">
                 <div class="card">
@@ -82,7 +113,7 @@
         $('#example2').DataTable({
             dom: 'Bfrtip',
             buttons: [
-                'csvHtml5'
+                // 'csvHtml5'
             ],
             order: [
                 [6, 'desc']

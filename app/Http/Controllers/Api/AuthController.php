@@ -61,6 +61,9 @@ class AuthController extends BaseController
 			// 	$request->only('mobile', 'role')
 			// );
 			Auth::loginUsingId($user_detail->id);
+			if (auth()->user()->status == 'Inactive') {
+				return $this->sendFailed('YOU ARE BLOCK BY ADMIN', 200);
+			}
 			$access_token = auth()->user()->createToken(auth()->user()->mobile)->accessToken;
 			auth()->user()->fill($request->only(['device_token']))->save();
 			\DB::commit();
@@ -264,7 +267,7 @@ class AuthController extends BaseController
 		];
 		$rules = [
 			'name'            => 'required|max:20',
-			'email' 		  => 'required|email',
+			// 'email' 		  => 'email',
 			'mobile'          => 'required|min:10|max:10',
 			'dob'			  => 'required|date',
 			'address'		  => 'required',
@@ -281,12 +284,12 @@ class AuthController extends BaseController
 		if ($mobileExist > 0) {
 			return $this->sendFailed("Mobile number has been already taken", 200);
 		}
-
-		$emailExist = User::where('id', '!=', auth()->user()->id)->where(['role' => auth()->user()->role, 'email' => $request->email])->count();
-		if ($emailExist > 0) {
-			return $this->sendFailed("Email address has been already taken", 200);
+		if ($request->email != '') {
+			$emailExist = User::where('id', '!=', auth()->user()->id)->where(['role' => auth()->user()->role, 'email' => $request->email])->count();
+			if ($emailExist > 0) {
+				return $this->sendFailed("Email address has been already taken", 200);
+			}
 		}
-
 		try {
 			\DB::beginTransaction();
 			$user_details = auth()->user();
@@ -380,8 +383,8 @@ class AuthController extends BaseController
 
 	public function send_sms_otp($mobile_number, $verification_otp)
 	{
-// 		return;
-// die;
+		// 		return;
+		// die;
 		// $opt_url = "https://2factor.in/API/V1/fd9c6a99-19d7-11ec-a13b-0200cd936042/SMS/" . $mobile_number . "/" . $verification_otp . "/OTP_TAMPLATE";
 		//$opt_url = "https://2factor.in/API/V1/786547ea-bbc8-11ec-9c12-0200cd936042/SMS/" . $mobile_number . "/" . $verification_otp . "/OTP_TAMPLATE";
 		$opt_url = "https://2factor.in/API/V1/eaf9b2b6-d5b4-11ec-9c12-0200cd936042/SMS/" . $mobile_number . "/" . $verification_otp . "/OTP_TAMPLATE";
@@ -397,43 +400,43 @@ class AuthController extends BaseController
 
 
 	public function sendsms2factorotp($numbers, $otp)
-    {
-       
-      /*   phone = '+918949529301';
+	{
+
+		/*   phone = '+918949529301';
         $otp = '7777'; */
 
-        $curl = curl_init();
+		$curl = curl_init();
 
-        curl_setopt_array($curl, array(
+		curl_setopt_array($curl, array(
 
-            CURLOPT_URL => 'https://2factor.in/API/V1/786547ea-bbc8-11ec-9c12-0200cd936042/SMS/+' . $numbers . '/' . $otp . '',
+			CURLOPT_URL => 'https://2factor.in/API/V1/786547ea-bbc8-11ec-9c12-0200cd936042/SMS/+' . $numbers . '/' . $otp . '',
 
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_ENCODING => "",
 
-            CURLOPT_MAXREDIRS => 10,
+			CURLOPT_MAXREDIRS => 10,
 
-            CURLOPT_TIMEOUT => 30,
+			CURLOPT_TIMEOUT => 30,
 
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+			CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
 
-            CURLOPT_CUSTOMREQUEST => "GET",
-            CURLOPT_POSTFIELDS => "{}",
+			CURLOPT_CUSTOMREQUEST => "GET",
+			CURLOPT_POSTFIELDS => "{}",
 
-        ));
+		));
 
-        $response = curl_exec($curl);
+		$response = curl_exec($curl);
 
-        $err = curl_error($curl);
+		$err = curl_error($curl);
 
-        $respons = json_decode($response, true);
-        // print_r($respons); exit;
-        return $respons;
-        // echo "<pre>";
-        // print_r($respons['Status']);
+		$respons = json_decode($response, true);
+		// print_r($respons); exit;
+		return $respons;
+		// echo "<pre>";
+		// print_r($respons['Status']);
 
-        curl_close($curl);
-    }
+		curl_close($curl);
+	}
 
 
 	public function changeOnlineStatus()

@@ -15,7 +15,7 @@
                 </div>
             </div>
         </div> <!-- Row end  -->
-        <div class="row g-3 mb-3">
+        <div class="row g-3 mb-3" style="width: 165%;">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-body">
@@ -62,8 +62,9 @@
 @section('script')
 
 <script>
-    $('.user-status').click(function() {
+        $(document).on('click', '.user-status', function (){
 
+        
         var id = $(this).attr('user_id');
         var status = $(this).attr('status') == "Active" ? 'Inactive' : 'Active';
         // if ($(this).is(':checked')) {
@@ -71,6 +72,7 @@
         // } else {
         // 	alert('not checked');
         // }
+        
         if (!confirm('Are you sure to change status this User')) {
             return true;
         }

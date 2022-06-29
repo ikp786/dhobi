@@ -39,6 +39,9 @@
                     <h3 class="fw-bold mb-0"></h3>
                 </div>
             </div>
+            <div>
+                <a  href="{{route('admin.orders.order-detail-pdf',request()->route('id'))}}"> <button class="btn btn-sm btn-primary" type="button"> PDF </button> </a>
+            </div>
         </div> <!-- Row end  -->
         <div class="row g-3 mb-3" style="width: 100%;">
             <div class="col-md-12">

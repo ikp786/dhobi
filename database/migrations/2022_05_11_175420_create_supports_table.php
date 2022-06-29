@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('supports', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
-            $table->string('order_id');
+            $table->string('order_id')->nullable();
             $table->string('reason');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();

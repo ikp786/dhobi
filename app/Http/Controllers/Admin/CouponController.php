@@ -45,7 +45,7 @@ class CouponController extends Controller
         
         $this->validate($request, [
             'coupon_code'               => 'required|max:15',
-            'coupon_amount'             => 'required|numeric|digits_between:1,8',
+            'coupon_amount'             => 'required|numeric',
             'start_date'                => 'required|date_format:Y-m-d|after_or_equal:today',
             'end_date'                  => 'required|date_format:Y-m-d|after_or_equal:start_date'
         ]);
@@ -99,7 +99,7 @@ class CouponController extends Controller
     {
         $this->validate($request, [
             'coupon_code'               => 'required|max:15',
-            'coupon_amount'             => 'required|numeric|digits_between:1,8',
+            'coupon_amount'             => 'required|numeric',
             'start_date'                => 'required|date_format:Y-m-d|after_or_equal:today',
             'end_date'                  => 'required|date_format:Y-m-d|after_or_equal:start_date'
         ]);

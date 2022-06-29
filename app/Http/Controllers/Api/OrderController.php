@@ -94,7 +94,9 @@ class OrderController extends BaseController
     public function createOrder(StoreOrderRequest $request)
     {
         try {
-            // $delivery_charge                = Setting::value('deliver_charge');
+            if (auth()->user()->status == 'Inactive') {
+				return $this->sendFailed('YOU ARE BLOCK BY ADMIN', 200);
+			}
             $checkCarts = Cart::where('user_id', auth()->user()->id)->get()->toArray();
             if (empty($checkCarts)) {
                 return $this->sendFailed('SORRY! NO PRODUCT FOUND IN CART', 200);
@@ -467,7 +469,7 @@ class OrderController extends BaseController
 
             $validator = Validator::make($request->all(), $rules, $error_message);
             if ($validator->fails()) {
-                return $this->sendFailed($validator->errors()->first(), 200);
+                // return $this->sendFailed($validator->errors()->first(), 200);
             }
             \DB::beginTransaction();
             $support = new Support();
