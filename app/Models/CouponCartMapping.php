@@ -11,7 +11,8 @@ class CouponCartMapping extends Model
 
     protected $fillable = [
         'coupon_code',
-        'coupon_amount',
+        'minimum_order_amount',
+        'max_discount_amount',
         'device_token',
         'user_id',
         'cart_id'

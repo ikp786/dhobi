@@ -100,7 +100,7 @@ Route::controller(AuthController::class)->group(function () {
             Route::post('delete_in_cart', 'deleteProdcutInCart');
             Route::post('get_Cart_detail', 'getCartDetail');
             Route::post('delete_add_on_service_in_cart', 'deleteAddOnServiceInCart');
-            // Route::post('apply_coupon', 'applyCoupon');
+            Route::get('get_coupon', 'getCouponList');
         });
         
 /*
@@ -117,6 +117,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('update_mobile', 'updateMobile');
         Route::post('re_sent_otp_mobile_update', 'reSentOtpMobileUpdate');
         Route::get('change_online_status', 'changeOnlineStatus');
+        Route::post('logout', 'logout');
     });
 
     

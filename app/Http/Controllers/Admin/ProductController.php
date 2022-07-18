@@ -45,7 +45,7 @@ class ProductController extends Controller
     public function create()
     {
         $title              = 'products';
-        $categories         = Category::pluck('name', 'id');
+        $categories         = Category::where('status', 1)->pluck('name', 'id');
         $add_on_services    = AddOnService::pluck('title', 'id');
         $data         = compact('title', 'categories', 'add_on_services');
         return view('admin.products.create', $data);
@@ -106,7 +106,7 @@ class ProductController extends Controller
     public function edit(Product $product, $id)
     {
         $title           = 'products';
-        $categories      = Category::pluck('name', 'id');
+        $categories      = Category::where('status', 1)->pluck('name', 'id');
         $sub_categories  = SubCategory::pluck('name', 'id');
         $add_on_services = AddOnService::pluck('title', 'id');
         $products        = Product::with('addOnServiceMappingInProduct')->find($id);

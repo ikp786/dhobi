@@ -17,6 +17,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('coupon_code', 50);
             $table->decimal('coupon_amount', 8, 2)->default(0.00);
+            $table->decimal('max_discount_amount', 8, 2)->default(0.00);
             $table->integer('status')->default(0);
             $table->date('start_date');
             $table->date('end_date');

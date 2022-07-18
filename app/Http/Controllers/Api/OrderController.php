@@ -95,8 +95,8 @@ class OrderController extends BaseController
     {
         try {
             if (auth()->user()->status == 'Inactive') {
-				return $this->sendFailed('YOU ARE BLOCK BY ADMIN', 200);
-			}
+                return $this->sendFailed('YOU ARE BLOCK BY ADMIN', 200);
+            }
             $checkCarts = Cart::where('user_id', auth()->user()->id)->get()->toArray();
             if (empty($checkCarts)) {
                 return $this->sendFailed('SORRY! NO PRODUCT FOUND IN CART', 200);
@@ -117,15 +117,29 @@ class OrderController extends BaseController
                 // $single_product_price   = (int)$productsData->price;
             }
             $checkcoupons = CouponCartMapping::where('user_id', auth()->user()->id)->first();
+            $online_discount = 0;
+
+
             if (isset($checkcoupons->id) && $checkcoupons != '') {
                 $coupon_code        = $checkcoupons->coupon_code;
-                $coupon_amount      = $checkcoupons->coupon_amount;
+
+                $coupon_amount      = round($total_amount / 100 * $checkcoupons->discount_percentage, 2);
+
+                if ($coupon_amount >= $checkcoupons->max_discount_amount) {
+                    $coupon_amount = $checkcoupons->max_discount_amount;
+                }
+
             } else {
+
+                if ($request->payment_method) {
+                    $online_discount = $total_amount / 100 * 10;
+                }
+
                 $coupon_code        = '';
                 $coupon_amount      = 0;
             }
 
-            $total_amounts = $total_amount + $delivery_charge - $coupon_amount;
+            $total_amounts = $total_amount + $delivery_charge - $coupon_amount - $online_discount;
 
             // if ($request->payment_method == 'Online') {
             //     $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRATE'));
@@ -149,9 +163,9 @@ class OrderController extends BaseController
             // } else {
             //     $orders->is_order = 1;
             // }
-            $p_time_slot_data                 = TimeSlot::find($request->pickup_time_slot_id);
-            $d_time_slot_data                 = TimeSlot::find($request->delivery_time_slot_id);
-            $address = Address::find($request->address_id);
+            $p_time_slot_data               = TimeSlot::find($request->pickup_time_slot_id);
+            $d_time_slot_data               = TimeSlot::find($request->delivery_time_slot_id);
+            $address                        = Address::find($request->address_id);
             $orders->address_id             = $request->address_id;
             $orders->address                = $address->address;
             $orders->pincode                = $address->pincode;
@@ -175,14 +189,14 @@ class OrderController extends BaseController
             foreach ($carts as $key => $value) {
                 // GET PRODCUT DETAIL PRODUCT TABLE
                 $products                                   = Product::find($value->product_id);
-                // ADD ON SERVICES 
+                // ADD ON SERVICES
                 $add_on_service_ids    = AddOnServiceMappingInCart::where(['cart_id' => $value->id])->pluck('add_on_service_id')->join(',');
 
                 $add_on_service_arr    = AddOnService::select('id', 'price', 'title')->whereIn('id', explode(',', $add_on_service_ids))->get()->toArray();
                 $add_on_service_price  = array_sum(array_column($add_on_service_arr, 'price'));
                 $add_on_service_encode = AddOnService::whereIn('id', explode(',', $add_on_service_ids))->pluck('price', 'title');
 
-                // TOTAL AMOUNT SUM 
+                // TOTAL AMOUNT SUM
                 $total_amount                               = $products->price * $value->product_quantity;
                 // SAVE ORDER PRODUCT DETAIL
                 $order_product                              = new OrderProduct();

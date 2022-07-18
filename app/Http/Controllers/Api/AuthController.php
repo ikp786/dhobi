@@ -6,6 +6,7 @@ use App\Helpers\Helper;
 use App\Http\Controllers\Api\BaseController;
 use App\Http\Resources\DriverProfile;
 use App\Http\Resources\UserProfileCollection;
+use App\Models\CouponCartMapping;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -121,7 +122,6 @@ class AuthController extends BaseController
 			return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
 		}
 	}
-
 	public function getUserProfile()
 	{
 		return $this->sendSuccess('LOGGED IN SUCCESSFULLY', ['profile_data' => new UserProfileCollection(auth()->user())]);
@@ -437,8 +437,6 @@ class AuthController extends BaseController
 
 		curl_close($curl);
 	}
-
-
 	public function changeOnlineStatus()
 	{
 		try {
@@ -446,6 +444,21 @@ class AuthController extends BaseController
 			$change = User::find(auth()->user()->id)->update(['online_status' => auth()->user()->online_status == 'Online' ? 'Offline' : 'Online']);
 			\DB::commit();
 			return $this->sendSuccess('Online Status change succssfully');
+		} catch (\Throwable $e) {
+			\DB::rollback();
+			return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
+		}
+	}
+
+	public function logout()
+	{
+		try {
+			\DB::beginTransaction();
+			auth()->user()->carts()->delete();
+			CouponCartMapping::where('user_id', auth()->user()->id)->delete();
+			auth()->user()->token()->revoke();
+			\DB::commit();
+			return $this->sendSuccess('Logout succssfully');
 		} catch (\Throwable $e) {
 			\DB::rollback();
 			return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);

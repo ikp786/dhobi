@@ -42,12 +42,15 @@ class CouponController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         $this->validate($request, [
             'coupon_code'               => 'required|max:15',
-            'coupon_amount'             => 'required|numeric',
+            'minimum_order_amount'      => 'required|numeric',
+            'max_discount_amount'      => 'required|numeric',
+            'discount_percentage'       => 'required|integer',
             'start_date'                => 'required|date_format:Y-m-d|after_or_equal:today',
-            'end_date'                  => 'required|date_format:Y-m-d|after_or_equal:start_date'
+            'end_date'                  => 'required|date_format:Y-m-d|after_or_equal:start_date',
+            'description'               => 'required|',
         ]);
 
         $input = $request->all();
@@ -99,9 +102,12 @@ class CouponController extends Controller
     {
         $this->validate($request, [
             'coupon_code'               => 'required|max:15',
-            'coupon_amount'             => 'required|numeric',
+            'minimum_order_amount'      => 'required|numeric',
+            'max_discount_amount'      => 'required|numeric',
+            'discount_percentage'       => 'required|integer',
             'start_date'                => 'required|date_format:Y-m-d|after_or_equal:today',
-            'end_date'                  => 'required|date_format:Y-m-d|after_or_equal:start_date'
+            'end_date'                  => 'required|date_format:Y-m-d|after_or_equal:start_date',
+            'description'               => 'required|',
         ]);
 
         $input = $request->all();

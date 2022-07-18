@@ -1,71 +1,81 @@
 @extends('admin.layouts.app')
 @section('style')
-<style>
-    td {
-        text-align: left !important;
-    }
-</style>
+    <style>
+        td {
+            text-align: left !important;
+        }
+    </style>
 @endsection
 @section('content')
-@include('admin.inc.validation_message')
-@include('admin.inc.auth_message')
-<!-- Body: Body -->
-<div class="body d-flex py-3">
-    <div class="container-xxl">
-        <div class="row align-items-center">
-            <div class="border-0 mb-4">
-                <div class="card-header py-3 no-bg bg-transparent d-flex align-items-center px-0 justify-content-between border-bottom flex-wrap">
-                    <span class="btn py-2 px-5 text-uppercase btn-set-task w-sm-100">List</span>
-                    <h3 class="fw-bold mb-0"></h3>
-                    <a href="{{route('admin.coupons.create')}}" class="btn btn-primary py-2 px-5 text-uppercase btn-set-task w-sm-100">Add</a>
-                </div>
-            </div>
-        </div> <!-- Row end  -->
-        <div class="row g-3 mb-3">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <table id="myDataTable" class="table table-hover align-middle mb-0" style="width: 100%;">
-                            <thead>
-                                <tr>
-                                    <th>Id</th>                                    
-                                    <th>coupon code</th>
-                                    <th>Coupon Amount</th>
-                                    <th>Start Date</th>
-                                    <th>End Date</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($coupons as $val)
-                                <tr>
-                                    <td class="td_text_align"><strong>{{$val->id}}</strong></a></td>                                    
-                                    <td class="td_text_align">{{$val->coupon_code}}</td>
-                                    <td class="td_text_align">₹ {{$val->coupon_amount}}</td>
-                                    <td class="td_text_align">{{$val->start_date}}</td>
-                                    <td class="td_text_align">{{$val->end_date}}</td>
-                                    
-                                    <td>{{$val->status == 1 ? 'Published' : 'Unpublish'}}</td>
-                                    <td class="td_text_align">
-                                        <a class="btn-xs sharp me-1" href="{{ route('admin.coupons.edit',$val->id) }}"><i class="icofont-edit text-success"></i></a>
-                                      {!! Form::open(['method' => 'DELETE','route' => ['admin.coupons.destroy', $val->id],'style'=>'display:inline']) !!}<button onclick="return confirm('Are you sure to delete Coupon?')" class="delete btn-xs sharp" type="submit"><i class="icofont-ui-delete text-danger"></i> </button>
-                                        {!! Form::close() !!} 
-                                    </td>                                    
-                                </tr>
-                                @empty
-                                @endforelse
-                            </tbody>
-                        </table>
+    @include('admin.inc.validation_message')
+    @include('admin.inc.auth_message')
+    <!-- Body: Body -->
+    <div class="body d-flex py-3">
+        <div class="container-xxl">
+            <div class="row align-items-center">
+                <div class="border-0 mb-4">
+                    <div
+                        class="card-header py-3 no-bg bg-transparent d-flex align-items-center px-0 justify-content-between border-bottom flex-wrap">
+                        <span class="btn py-2 px-5 text-uppercase btn-set-task w-sm-100">List</span>
+                        <h3 class="fw-bold mb-0"></h3>
+                        <a href="{{ route('admin.coupons.create') }}"
+                            class="btn btn-primary py-2 px-5 text-uppercase btn-set-task w-sm-100">Add</a>
                     </div>
                 </div>
-            </div>
-        </div> <!-- Row end  -->
+            </div> <!-- Row end  -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <table id="myDataTable" class="table table-hover align-middle mb-0" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>coupon code</th>
+                                        <th>Minimum Order Amount</th>
+                                        <th>Discount Percentage</th>
+                                        <th>Max Discount</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($coupons as $val)
+                                        <tr>
+                                            <td class="td_text_align"><strong>{{ $val->id }}</strong></a></td>
+                                            <td class="td_text_align">{{ $val->coupon_code }}</td>
+                                            <td class="td_text_align">₹ {{ $val->minimum_order_amount }}</td>
+                                            <td class="td_text_align"> {{ $val->discount_percentage }}%</td>
+                                            <td class="td_text_align">₹ {{ $val->max_discount_amount }}</td>
+                                            <td class="td_text_align">{{ $val->start_date }}</td>
+                                            <td class="td_text_align">{{ $val->end_date }}</td>
+                                            <td class="td_text_align">{{ $val->description }}</td>
+                                            <td>{{ $val->status == 1 ? 'Published' : 'Unpublish' }}</td>
+                                            <td class="td_text_align">
+                                                <a class="btn-xs sharp me-1"
+                                                    href="{{ route('admin.coupons.edit', $val->id) }}"><i
+                                                        class="icofont-edit text-success"></i></a>
+                                                {!! Form::open(['method' => 'DELETE', 'route' => ['admin.coupons.destroy', $val->id], 'style' => 'display:inline']) !!}<button
+                                                    onclick="return confirm('Are you sure to delete Coupon?')"
+                                                    class="delete btn-xs sharp" type="submit"><i
+                                                        class="icofont-ui-delete text-danger"></i> </button>
+                                                {!! Form::close() !!}
+                                            </td>
+                                        </tr>
+                                    @empty
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- Row end  -->
+        </div>
     </div>
-</div>
 @endsection
 @section('script')
-<script>
-   
-</script>
+    <script></script>
 @endsection

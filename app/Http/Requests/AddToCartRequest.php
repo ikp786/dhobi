@@ -40,10 +40,8 @@ class AddToCartRequest extends FormRequest
         return [
             'product_id.required'      => 'Product Id should be required',
             'product_id.exists'        => 'Product Id not found',
-            'product_id.exists'        => 'Product Id should be integer',
             'category_id.required'     => 'Category Id should be required',
             'category_id.exists'       => 'Category Id not found',
-            'category_id.exists'       => 'Category Id should be integer'
         ];
     }
 

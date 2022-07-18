@@ -17,6 +17,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('coupon_code', 50);
             $table->decimal('coupon_amount', 8, 2)->default(0.00);
+            $table->decimal('max_discount_amount', 8, 2)->default(0.00);
             // $table->string('device_token',255);
             $table->unsignedBigInteger('user_id')->nullable();
             $table->unsignedBigInteger('cart_id')->nullable();
