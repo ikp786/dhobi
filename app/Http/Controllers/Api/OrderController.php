@@ -131,7 +131,7 @@ class OrderController extends BaseController
 
             } else {
 
-                if ($request->payment_method) {
+                if ($request->payment_method == 'Online') {
                     $online_discount = $total_amount / 100 * 10;
                 }
 
@@ -223,7 +223,7 @@ class OrderController extends BaseController
                 $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRATE'));
                 $orderData = [
                     'receipt'         => 'rcptid_11',
-                    'amount'          => $total_amount * 100, // 39900 rupees in paise
+                    'amount'          => ($total_amounts + $orders->add_on_service_amount) * 100, // 39900 rupees in paise
                     'currency'        => 'INR'
                 ];
                 $razorpayOrder = $api->order->create($orderData);

@@ -262,25 +262,30 @@ class ProductController extends BaseController
     function addToCart(AddToCartRequest $request)
     {
         try {
+
+
+            $data = json_encode($request->all());
+			\DB::table('tests')->insert(['log' => $data]);
+
             $products  = Product::find($request->product_id);
             if (!isset($products) || empty($products)) {
                 return $this->sendFailed('PRODUCT ID NOT FOUND', 200);
             }
             $add_on_service = explode(",", $request->add_on_services);
-            sort( $add_on_service);
+            sort($add_on_service);
 
             $couponExist = CouponCartMapping::where('device_token', $request->device_token)->first();
             if (isset($couponExist->id)) {
                 $couponExist->delete();
             }
             // CHEK THIS PRODUCT ALREADY ADDED OR NOT IN CART
-            if(!empty($add_on_service))
-            {
-                $checkExist = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token,"add_on_services"=>implode(",",$add_on_service)])->orderBy('created_at', 'desc')->first();
+            if (!empty($add_on_service)) {
+                $checkExist = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token, "add_on_services" => implode(",", $add_on_service)])->orderBy('created_at', 'desc')->first();
+            } else {
+                $checkExist = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token, "add_on_services" => null])->orderBy('created_at', 'desc')->first();
             }
-            else{
-                $checkExist = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token,"add_on_services"=>null])->orderBy('created_at', 'desc')->first();
-            }
+
+
 
 
             // dd($AddOnServiceMappingInCart);
@@ -293,7 +298,7 @@ class ProductController extends BaseController
                 $add_to_cart->sub_category_id     = $products->sub_category_id;
                 $add_to_cart->total_amount        = $products->price * $request->product_quantity;
                 $add_to_cart->product_name        = $products->name;
-                $add_to_cart->add_on_services        =implode(",",$add_on_service);
+                $add_to_cart->add_on_services     = implode(",", $add_on_service);
 
 
                 $add_to_cart->save();
@@ -320,13 +325,13 @@ class ProductController extends BaseController
             } elseif (empty($checkExist)) {
 
 
-                $add_to_cart =new Cart();
+                $add_to_cart = new Cart();
                 $add_to_cart->fill($request->only('product_id', 'category_id', 'product_quantity', 'user_id', 'device_token'));
                 $add_to_cart->product_amount      = $products->price;
                 $add_to_cart->sub_category_id     = $products->sub_category_id;
                 $add_to_cart->total_amount        = $products->price * $request->product_quantity;
                 $add_to_cart->product_name        = $products->name;
-                $add_to_cart->add_on_services        =implode(",",$add_on_service);
+                $add_to_cart->add_on_services     = implode(",", $add_on_service);
                 $add_to_cart->save();
                 if (isset($request->add_on_services)) {
                     $add_on_service = explode(",", $request->add_on_services);
@@ -378,9 +383,9 @@ class ProductController extends BaseController
 
             // CHECK ADD ON SERVICE ALREADY EXISTS OR NOT
             $add_on_service = explode(",", $request->add_on_services);
-           sort( $add_on_service);
-            $checkAddOnServiceExist = AddOnServiceMappingInCart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token])->whereIn('add_on_service_id' , $add_on_service)->get();
-// dd($checkAddOnServiceExist);
+            sort($add_on_service);
+            $checkAddOnServiceExist = AddOnServiceMappingInCart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token])->whereIn('add_on_service_id', $add_on_service)->get();
+            // dd($checkAddOnServiceExist);
             // UPDATE PRODUCT IN CART
 
             if (isset($checkAddOnServiceExist->cart_id)) {
@@ -396,7 +401,7 @@ class ProductController extends BaseController
                 $add_to_cart->sub_category_id     = $products->sub_category_id;
                 $add_to_cart->total_amount        = $products->price * $request->product_quantity;
                 $add_to_cart->product_name        = $products->name;
-                $add_to_cart->add_on_services        =implode(",",$add_on_service);
+                $add_to_cart->add_on_services        = implode(",", $add_on_service);
 
 
                 $add_to_cart->save();
@@ -430,7 +435,7 @@ class ProductController extends BaseController
                 $add_to_cart->sub_category_id     = $products->sub_category_id;
                 $add_to_cart->total_amount        = $products->price * $request->product_quantity;
                 $add_to_cart->product_name        = $products->name;
-                $add_to_cart->add_on_services        =implode(",",$add_on_service);
+                $add_to_cart->add_on_services        = implode(",", $add_on_service);
                 $add_to_cart->save();
                 if (isset($request->add_on_services)) {
                     $add_on_service = explode(",", $request->add_on_services);
@@ -461,7 +466,7 @@ class ProductController extends BaseController
                 $add_to_cart->sub_category_id     = $products->sub_category_id;
                 $add_to_cart->total_amount        = $products->price * $request->product_quantity;
                 $add_to_cart->product_name        = $products->name;
-                $add_to_cart->add_on_services        =implode(",",$add_on_service);
+                $add_to_cart->add_on_services        = implode(",", $add_on_service);
                 $add_to_cart->save();
                 if (isset($request->add_on_services)) {
                     $add_on_service = explode(",", $request->add_on_services);
@@ -520,6 +525,54 @@ class ProductController extends BaseController
             if ($validator->fails()) {
                 return $this->sendFailed($validator->errors()->first(), 200);
             }
+            $couponExist = CouponCartMapping::where('device_token', $request->device_token)->first();
+            if (isset($couponExist->id)) {
+                $couponExist->delete();
+            }
+
+            $checkExist = AddOnServiceMappingInCart::where(['cart_id' => $request->cart_id, 'product_id' => $request->product_id, 'add_on_service_id' => $request->add_on_service_id, 'device_token' => $request->device_token])->first();
+            if (!$checkExist) {
+                return $this->sendFailed('ADD ON SERVICE NOT FOUND', 200);
+            }
+            $checkExist->delete();
+            $total_prod__qty_in_cart = Cart::where('id', $request->cart_id)->value('product_quantity');
+            $remainAddOnService = AddOnServiceMappingInCart::where(['cart_id' => $request->cart_id, 'product_id' => $request->product_id, 'device_token' => $request->device_token])->orderBy("add_on_service_id", "ASC")->pluck("add_on_service_id");
+            // echo (implode(",",$remainAddOnService->toArray()));die;
+            $checkCart = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token, "add_on_services" => implode(",", $remainAddOnService->toArray())])->orderBy('created_at', 'desc')->first();
+            Cart::where('id', $request->cart_id)->update([
+                'add_on_services' => implode(",", $remainAddOnService->toArray())
+            ]);
+
+            if (!empty($checkCart)) {
+                $newQTy = $checkCart->product_quantity + $total_prod__qty_in_cart;
+                $checkCart->product_quantity = $newQTy;
+                $checkCart->save();
+
+                Cart::where('id', $request->cart_id)->delete();
+            }
+
+
+            return $this->sendSuccess('ADD ON SERVICE DELETE IN CART SUCCESSFULLY');
+        } catch (\Throwable $e) {
+            return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
+        }
+    }
+    public function deleteAddOnServiceInCartOld(Request $request)
+    {
+        try {
+            $error_message = [
+                'cart_id.required'     => 'Cart Id should be required',
+            ];
+            $rules = [
+                'cart_id'             => 'required|exists:carts,id',
+                'device_token'        => 'required',
+                'product_id'          => 'required|exists:add_on_service_mapping_in_carts,product_id',
+                'add_on_service_id'   => 'required|exists:add_on_service_mapping_in_carts,add_on_service_id',
+            ];
+            $validator = Validator::make($request->all(), $rules, $error_message);
+            if ($validator->fails()) {
+                return $this->sendFailed($validator->errors()->first(), 200);
+            }
             $checkExist = AddOnServiceMappingInCart::where(['cart_id' => $request->cart_id, 'product_id' => $request->product_id, 'add_on_service_id' => $request->add_on_service_id, 'device_token' => $request->device_token])->first();
             if (!$checkExist) {
                 return $this->sendFailed('ADD ON SERVICE NOT FOUND', 200);
@@ -533,17 +586,17 @@ class ProductController extends BaseController
 
             $cart_data = AddOnServiceMappingInCart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token])->pluck('cart_id');
 
-            $cart_id = Cart::whereNotIn('id', $cart_data)->where('device_token',$request->device_token)->value('id');
+            $cart_id = Cart::whereNotIn('id', $cart_data)->where('device_token', $request->device_token)->value('id');
             $total_prod__qty_in_cart2 = Cart::where('id', $cart_id)->value('product_quantity');
             // echo $cart_id;die;
             if ($cart_id != '') {
-                $total_qty = (int)$total_prod__qty_in_cart + (int)$total_prod__qty_in_cart2;
+                // $total_qty = (int)$total_prod__qty_in_cart + (int)$total_prod__qty_in_cart2;
                 // echo $total_qty.'<br>'.$cart_id;die;
                 // Cart::find($cart_id)->update(['product_quantity',$total_qty]);
-                Cart::find($cart_id)->increment('product_quantity', $total_prod__qty_in_cart);//update(['product_quantity',$total_qty]);
+                Cart::find($cart_id)->increment('product_quantity', $total_prod__qty_in_cart); //update(['product_quantity',$total_qty]);
                 Cart::find($request->cart_id)->delete();
             } else {
-                // $checkExist->delete();
+                $checkExist->delete();
             }
 
             return $this->sendSuccess('ADD ON SERVICE DELETE IN CART SUCCESSFULLY');
@@ -665,7 +718,7 @@ class ProductController extends BaseController
             }
             $delivery_charge                = isset($checkExist->delivery_charge) ? $checkExist->delivery_charge : 0;
             $total_amount = $delivery_charge + $total_sum + $total_add_on_service_price - $discount;
-            $discount_message  = 'Pay online and Get 10% OFF on your order';
+            $discount_message  = '10% Discount';
             $data = ['cart_data' => $product_array, 'product_count' => $product_count, 'add_on_service_charge' => $total_add_on_service_price, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'discount_message' => $discount_message, 'address' => $address];
             return $this->sendSuccess('CART DATA GET SUCCESSFULLY', $data);
         } catch (\Throwable $e) {
