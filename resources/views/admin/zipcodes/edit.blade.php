@@ -40,6 +40,11 @@
                             </div>
 
                             <div class="col-md-6">
+                                <label class="form-label">Minimum Order Value</label>
+                                {!! Form::number('minimum_order_value', $zipcodes->minimum_order_value, array('class' => 'form-control')) !!}
+                            </div>
+
+                            <div class="col-md-6">
                                 <div class="card-header py-3 d-flex justify-content-between align-items-center bg-transparent border-bottom-0">
                                     <h6 class="m-0 fw-bold">Status</h6>
                                 </div>

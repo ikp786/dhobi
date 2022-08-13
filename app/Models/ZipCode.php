@@ -12,6 +12,7 @@ class ZipCode extends Model
     protected $fillable = [
         'zipcode',
         'delivery_charge',
+        'minimum_order_value',
         'status'
     ];
 }

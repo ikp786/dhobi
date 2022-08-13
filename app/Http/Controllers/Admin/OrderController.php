@@ -30,8 +30,8 @@ class OrderController extends Controller
             $order->whereDate('created_at', '<=',  $request->end_date);
         }
 
-        $orders = $order->orderBy('id', 'desc')->get();
-        $drivers    =  User::where('role', 3)->get(['name', 'id', 'mobile']);
+        $orders = $order->get();
+        $drivers    =  User::where('role', 3)->where('name','!=',null)->get(['name', 'id', 'mobile']);
         $title      =  'Order';
         $data       =  compact('title', 'orders', 'drivers', 'request');
         return view('admin.orders.order-new', $data);
@@ -148,5 +148,19 @@ class OrderController extends Controller
 
         $data       =  compact('title', 'supports');
         return view('admin.supports.index', $data);
+    }
+
+    public function orderCancelAdmin(Request $request)
+    {
+            $order = Order::find($request->id);
+            $order->admin_cancel_remark = $request->admin_cancel_remark;
+            $order->order_delivery_status = "Canceled";
+            $order->save();
+            if ($order) {
+                return response()->json(['success' => 'Update Successfully.', 'status' => 200]);
+            }else{
+                return response()->json(['success' => 'Failed.', 'status' => 999]);
+
+            }
     }
 }

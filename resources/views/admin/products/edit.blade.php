@@ -98,6 +98,8 @@
                             <div class="col-md-4">
                                 <label class="form-label">Image</label>
                                 {{ Form::file('image',['class' => 'form-control']) }}
+                            </br>
+                                <img src="{{asset('storage/app/public/product_images/'.$products->image)}}" class="avatar lg rounded me-2" alt="image not found">
                             </div>
                             <div class="col-md-4">
                                 <br>

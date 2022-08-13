@@ -29,6 +29,7 @@
                                     <th>Mobile</th>
                                     <th>Address</th>
                                     <th>Status</th>
+                                    <th >Created Date</th>
                                     <th>Total Order</th>
                                 </tr>
                             </thead>
@@ -45,7 +46,9 @@
                                         <div class="form-check form-switch"><input data-id="{{ $val->id }}" user_id="{{ $val->id }}" status="{{ $val->status }}" style="background-color: #16d9c8;" status="{{ $val->status }}" class="user-status form-check-input" data-toggle="toggle" data-on="Active" data-off="Inactive" data-onstyle="warning" data-offstyle="dark" type="checkbox" {{ $val->status == 'Active' ? 'checked' : '' }}>
                                         </div>
                                     </td>
-                                    <td>{{$val->orders->count() > 0 ? $val->orders->count() : 0 }}</td>
+                                    <td>{{date("d-m-Y H:i:s",strtotime($val->created_at))}}</td>
+                                    <td>{{$val->orders->count() > 0 ? $val->orders->count() : 0 }}
+
                                     </td>
                                 </tr>
                                 @empty

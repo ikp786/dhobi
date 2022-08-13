@@ -24,6 +24,7 @@ class DriverOrderList extends JsonResource
             'id'                     => $this->id,
             'order_id'               => $this->order_number,
             'name'                   => isset($user->name) ? $user->name : '',
+            'mobile'                 => isset($user->mobile) ? $user->mobile : '',
             'product_name'           => $product_name,
             'order_date'             => date('d/m/Y',strtotime($this->created_at)),
             'pickup_date'            => date('d/m/Y',strtotime($this->pickup_date)),
@@ -32,9 +33,10 @@ class DriverOrderList extends JsonResource
             'delivery_time'          => $this->delivery_time,
             'order_delivery_status'  => $this->order_delivery_status,
             'payment_method'         => $this->payment_method,
-            'total_amount'           => $this->order_amount            
+            'total_amount'           => $this->order_amount,
+            'remark'                 => $this->remark ?? ''
         ];
-        
+
         if($this->order_delivery_status == 'Pending'){
             $data['address'] = isset($address) ? new AddressCollection($address) : '';
         }else{

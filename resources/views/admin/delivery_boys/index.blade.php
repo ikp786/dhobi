@@ -35,6 +35,7 @@
                                     <th>Unique Id</th>
                                     <th>Email</th>
                                     <th>Mobile</th>
+                                    <th >Created Date</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -48,6 +49,7 @@
                                     <td>{{$val->unique_id}}</td>
                                     <td>{{$val->email}}</td>
                                     <td>{{$val->mobile}}</td>
+                                    <td>{{date("d-m-Y H:i:s",strtotime($val->created_at))}}</td>
 
                                     <td>
                                         <div class="form-check form-switch"><input data-id="{{ $val->id }}" user_id="{{ $val->id }}" status="{{ $val->status }}" style="background-color: #16d9c8;" status="{{ $val->status }}" class="user-status form-check-input" data-toggle="toggle" data-on="Active" data-off="Inactive" data-onstyle="warning" data-offstyle="dark" type="checkbox" {{ $val->status == 'Active' ? 'checked' : '' }}>

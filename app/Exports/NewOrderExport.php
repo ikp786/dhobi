@@ -43,6 +43,7 @@ class NewOrderExport implements WithHeadings, WithMapping, FromQuery
             'Deliver  Time',
             'Order  Status',
             'Payment  Status',
+            'Location',
             'Address',
             'Pincode',
             'Driver'
@@ -65,6 +66,7 @@ class NewOrderExport implements WithHeadings, WithMapping, FromQuery
             $val->delivery_time,
             $val->order_delivery_status,
             $val->payment_status,
+            isset($val->addresses->location) ? $val->addresses->location : '',
             isset($val->addresses->address) ? $val->addresses->address : '',
             isset($val->addresses->pincode) ? $val->addresses->pincode : '',
             $val->drivers->name ?? ''

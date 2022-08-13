@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SliderController;
 use App\Http\Controllers\Admin\SubCategoryController;
 use App\Http\Controllers\Admin\TimeSlotController;
 use App\Http\Controllers\Admin\ZipCodeController;
+use App\Http\Controllers\Front\HomeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,6 +74,7 @@ Route::group(['prefix' => 'admin'], function () {
 */
         Route::controller(OrderController::class)->group(function () {
             Route::group(['prefix' => 'orders'], function () {
+                Route::post('orderCancelAdmin','orderCancelAdmin')->name('admin.orders.order-cancel-admin');
                 Route::get('new', 'newOrderList')->name('admin.orders.new');
                 Route::get('old', 'oldOrderList')->name('admin.orders.old');
                 Route::post('asign-driver', 'asignDriver')->name('admin.orders.asign-driver');
@@ -102,7 +104,7 @@ Route::group(['prefix' => 'admin'], function () {
         });
         /*
 |--------------------------------------------------------------------------
-| CATEGORIES CREATE STORE DELETE UPDATE EDIT 
+| CATEGORIES CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
         Route::controller(CategoryController::class)->group(function () {
@@ -118,7 +120,7 @@ Route::group(['prefix' => 'admin'], function () {
 
         /*
 |--------------------------------------------------------------------------
-| SUB CATEGORIES CREATE STORE DELETE UPDATE EDIT 
+| SUB CATEGORIES CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
         Route::controller(SubCategoryController::class)->group(function () {
@@ -137,7 +139,7 @@ Route::group(['prefix' => 'admin'], function () {
 
         /*
 |--------------------------------------------------------------------------
-| ADDONSERVICE CREATE STORE DELETE UPDATE EDIT 
+| ADDONSERVICE CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
         Route::controller(AddOnServiceController::class)->group(function () {
@@ -153,7 +155,7 @@ Route::group(['prefix' => 'admin'], function () {
 
         /*
 |--------------------------------------------------------------------------
-| PRODUCTS CREATE STORE DELETE UPDATE EDIT 
+| PRODUCTS CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
         Route::controller(ProductController::class)->group(function () {
@@ -172,7 +174,7 @@ Route::group(['prefix' => 'admin'], function () {
 
         /*
 |--------------------------------------------------------------------------
-| OFFERS CREATE STORE DELETE UPDATE EDIT 
+| OFFERS CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
         Route::controller(OfferController::class)->group(function () {
@@ -189,7 +191,7 @@ Route::group(['prefix' => 'admin'], function () {
 
         /*
 |--------------------------------------------------------------------------
-| DELIVERY BOY CREATE STORE DELETE UPDATE EDIT 
+| DELIVERY BOY CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
         Route::controller(DeliveryBoyController::class)->group(function () {
@@ -226,55 +228,61 @@ Route::group(['prefix' => 'admin'], function () {
 | TIMESLOT CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
-Route::controller(TimeSlotController::class)->group(function () {
-    Route::group(['prefix' => 'timeslots'], function () {
-        Route::get('index', 'index')->name('admin.timeslots.index');
-        Route::get('create', 'create')->name('admin.timeslots.create');
-        Route::post('store', 'store')->name('admin.timeslots.store');
-        Route::get('edit/{id}', 'edit')->name('admin.timeslots.edit');
-        Route::PATCH('update/{id}', 'update')->name('admin.timeslots.update');
-        Route::delete('destroy{id}', 'destroy')->name('admin.timeslots.destroy');
-    });
-});
+        Route::controller(TimeSlotController::class)->group(function () {
+            Route::group(['prefix' => 'timeslots'], function () {
+                Route::get('index', 'index')->name('admin.timeslots.index');
+                Route::get('create', 'create')->name('admin.timeslots.create');
+                Route::post('store', 'store')->name('admin.timeslots.store');
+                Route::get('edit/{id}', 'edit')->name('admin.timeslots.edit');
+                Route::PATCH('update/{id}', 'update')->name('admin.timeslots.update');
+                Route::delete('destroy{id}', 'destroy')->name('admin.timeslots.destroy');
+            });
+        });
 
 
-/*
+        /*
 |--------------------------------------------------------------------------
 | ZIPCODE CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
-Route::controller(ZipCodeController::class)->group(function () {
-    Route::group(['prefix' => 'zipcodes'], function () {
-        Route::get('index', 'index')->name('admin.zipcodes.index');
-        Route::get('create', 'create')->name('admin.zipcodes.create');
-        Route::post('store', 'store')->name('admin.zipcodes.store');
-        Route::get('edit/{id}', 'edit')->name('admin.zipcodes.edit');
-        Route::PATCH('update/{id}', 'update')->name('admin.zipcodes.update');
-        Route::delete('destroy{id}', 'destroy')->name('admin.zipcodes.destroy');
-    });
-});
+        Route::controller(ZipCodeController::class)->group(function () {
+            Route::group(['prefix' => 'zipcodes'], function () {
+                Route::get('index', 'index')->name('admin.zipcodes.index');
+                Route::get('create', 'create')->name('admin.zipcodes.create');
+                Route::post('store', 'store')->name('admin.zipcodes.store');
+                Route::get('edit/{id}', 'edit')->name('admin.zipcodes.edit');
+                Route::PATCH('update/{id}', 'update')->name('admin.zipcodes.update');
+                Route::delete('destroy{id}', 'destroy')->name('admin.zipcodes.destroy');
+            });
+        });
 
 
 
-/*
+        /*
 |--------------------------------------------------------------------------
 | COUPON CREATE STORE DELETE UPDATE EDIT
 |--------------------------------------------------------------------------
 */
-Route::controller(CouponController::class)->group(function () {
-    Route::group(['prefix' => 'coupons'], function () {
-        Route::get('index', 'index')->name('admin.coupons.index');
-        Route::get('create', 'create')->name('admin.coupons.create');
-        Route::post('store', 'store')->name('admin.coupons.store');
-        Route::get('edit/{id}', 'edit')->name('admin.coupons.edit');
-        Route::PATCH('update/{id}', 'update')->name('admin.coupons.update');
-        Route::delete('destroy{id}', 'destroy')->name('admin.coupons.destroy');
+        Route::controller(CouponController::class)->group(function () {
+            Route::group(['prefix' => 'coupons'], function () {
+                Route::get('index', 'index')->name('admin.coupons.index');
+                Route::get('create', 'create')->name('admin.coupons.create');
+                Route::post('store', 'store')->name('admin.coupons.store');
+                Route::get('edit/{id}', 'edit')->name('admin.coupons.edit');
+                Route::PATCH('update/{id}', 'update')->name('admin.coupons.update');
+                Route::delete('destroy{id}', 'destroy')->name('admin.coupons.destroy');
+            });
+        });
     });
 });
 
+/*
+|--------------------------------------------------------------------------
+| FRONT ROUTE
+|--------------------------------------------------------------------------
+*/
 
-
-
-
-    });
+Route::controller(HomeController::class)->group(function () {
+    Route::get('terms-and-conditions', 'termsAndConditions')->name('front.pages.terms-and-conditions');
+    Route::get('faq', 'faq')->name('front.pages.faq');
 });

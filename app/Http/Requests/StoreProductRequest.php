@@ -25,7 +25,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name'              => 'required',
-            'price'             => 'required|numeric|digits_between:1,8',
+            'price'             => 'required',
             'category_id'       => 'required|exists:categories,id',
             'sub_category_id'   => 'required|exists:sub_categories,id',
             // 'add_on_service'    => 'required|array',

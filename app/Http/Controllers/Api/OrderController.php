@@ -97,29 +97,49 @@ class OrderController extends BaseController
             if (auth()->user()->status == 'Inactive') {
                 return $this->sendFailed('YOU ARE BLOCK BY ADMIN', 200);
             }
+            // CHEK PRODUCT IN CART OR NOT
             $checkCarts = Cart::where('user_id', auth()->user()->id)->get()->toArray();
             if (empty($checkCarts)) {
                 return $this->sendFailed('SORRY! NO PRODUCT FOUND IN CART', 200);
             }
-
+            // GET ADDRESS DETAIL
             $address = Address::find($request->address_id);
-
+            // GET ADDRESS PINCODE DELIVERY OR NOT
             $checkExist = ZipCode::where('zipcode', $address->pincode)->first();
             if (!isset($checkExist) || empty($checkExist)) {
                 return $this->sendFailed('Delivery Service are not available for this pincode please contact to support.', 200);
             }
             $delivery_charge                = $checkExist->delivery_charge;
-
+            // GET TOTAL PRODUCT AMOUNT
             $total_amount = 0;
             foreach ($checkCarts as $key => $val) {
                 $productsData           = Product::find($val['product_id']);
                 $total_amount           = $total_amount + (int)$productsData->price * (int)$val['product_quantity'];
                 // $single_product_price   = (int)$productsData->price;
             }
+
+
+            // GET TOTAL ADD ON SERVICE AMOUNT
+            $carts = Cart::where('user_id', auth()->user()->id)->get();
+            $add_on_service_pricess = 0;
+            foreach ($carts as $key => $value) {
+                // GET PRODCUT DETAIL PRODUCT TABLE
+                $products              = Product::find($value->product_id);
+                // ADD ON SERVICES
+                $add_on_service_ids    = AddOnServiceMappingInCart::where(['cart_id' => $value->id])->pluck('add_on_service_id')->join(',');
+
+                $add_on_service_arr    = AddOnService::select('id', 'price', 'title')->whereIn('id', explode(',', $add_on_service_ids))->get()->toArray();
+                // CALCULATE ADDONSERVICE AMOUNT
+                $add_on_service_pricess  = ($add_on_service_pricess + array_sum(array_column($add_on_service_arr, 'price'))) * $value->product_quantity;
+            }
+            // GET MINIMUM ORDER VALUE
+            $minimum_order_value            = isset($checkExist->minimum_order_value) ? $checkExist->minimum_order_value : 0;
+            // TOTAL SUM PRODUCT OR ADD ON SERVICE AMOUNT
+            $total_product_and_service_amt  = $total_amount + $add_on_service_pricess;
+
+            // CHECK COUPON EXIST OR NOT IF EXIST COUPON APPLY
             $checkcoupons = CouponCartMapping::where('user_id', auth()->user()->id)->first();
             $online_discount = 0;
-
-
             if (isset($checkcoupons->id) && $checkcoupons != '') {
                 $coupon_code        = $checkcoupons->coupon_code;
 
@@ -128,19 +148,28 @@ class OrderController extends BaseController
                 if ($coupon_amount >= $checkcoupons->max_discount_amount) {
                     $coupon_amount = $checkcoupons->max_discount_amount;
                 }
-
             } else {
 
                 if ($request->payment_method == 'Online') {
-                    $online_discount = $total_amount / 100 * 10;
+                    if ($total_product_and_service_amt >= $minimum_order_value) {
+                        $delivery_charge = 0;
+                    }
+                    $online_discount = ($total_product_and_service_amt+$delivery_charge) / 100 * 5;
                 }
 
                 $coupon_code        = '';
                 $coupon_amount      = 0;
             }
 
-            $total_amounts = $total_amount + $delivery_charge - $coupon_amount - $online_discount;
+            // $total_amounts = ($total_product_and_service_amt + $delivery_charge) - ($coupon_amount + $online_discount);
 
+            if ($total_product_and_service_amt >= $minimum_order_value) {
+                $delivery_charge = 0;
+            }
+            // echo $total_product_and_service_amt + $delivery_charge;
+
+            $total_amounts = ($total_product_and_service_amt + $delivery_charge) - ($coupon_amount + $online_discount);
+            // echo '<br>'. $total_amounts;die;
             // if ($request->payment_method == 'Online') {
             //     $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRATE'));
             //     $orderData = [
@@ -176,7 +205,7 @@ class OrderController extends BaseController
             $orders->remark                 = $request->remark;
             $orders->pickup_time_slot_id    = $request->pickup_time_slot_id;
             $orders->delivery_time_slot_id  = $request->delivery_time_slot_id;
-            $orders->pickup_time            =  date('h:i A', strtotime($p_time_slot_data->from)) . ' to ' .  date('h:i A', strtotime($p_time_slot_data->to));
+            $orders->pickup_time            = date('h:i A', strtotime($p_time_slot_data->from)) . ' to ' .  date('h:i A', strtotime($p_time_slot_data->to));
             $orders->delivery_time          = date('h:i A', strtotime($d_time_slot_data->from)) . ' to ' . date('h:i A', strtotime($d_time_slot_data->to));
             $orders->order_amount           = $total_amounts;
             $orders->deliver_charge         = $delivery_charge;
@@ -193,7 +222,7 @@ class OrderController extends BaseController
                 $add_on_service_ids    = AddOnServiceMappingInCart::where(['cart_id' => $value->id])->pluck('add_on_service_id')->join(',');
 
                 $add_on_service_arr    = AddOnService::select('id', 'price', 'title')->whereIn('id', explode(',', $add_on_service_ids))->get()->toArray();
-                $add_on_service_price  = array_sum(array_column($add_on_service_arr, 'price'));
+                $add_on_service_price  = array_sum(array_column($add_on_service_arr, 'price')) * $value->product_quantity;
                 $add_on_service_encode = AddOnService::whereIn('id', explode(',', $add_on_service_ids))->pluck('price', 'title');
 
                 // TOTAL AMOUNT SUM
@@ -223,7 +252,7 @@ class OrderController extends BaseController
                 $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRATE'));
                 $orderData = [
                     'receipt'         => 'rcptid_11',
-                    'amount'          => ($total_amounts + $orders->add_on_service_amount) * 100, // 39900 rupees in paise
+                    'amount'          => ($total_amounts) * 100, // 39900 rupees in paise
                     'currency'        => 'INR'
                 ];
                 $razorpayOrder = $api->order->create($orderData);
@@ -235,8 +264,8 @@ class OrderController extends BaseController
             }
 
             $orders->total_product_amount   = OrderProduct::where('order_id', $orders->id)->sum('total_amount');
-            $orders->add_on_service_amount = OrderProduct::where('order_id', $orders->id)->sum('add_on_service_amount');
-            $orders->order_amount           = $total_amounts + $orders->add_on_service_amount;
+            $orders->add_on_service_amount  = OrderProduct::where('order_id', $orders->id)->sum('add_on_service_amount');
+            $orders->order_amount           = $total_amounts;
             $orders = auth()->user()->orders()->save($orders);
             // SAVE ORDER PLACE ADDRESS DETAILS
             // $address                        = new Address();

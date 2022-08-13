@@ -97,12 +97,13 @@ Route::controller(AuthController::class)->group(function () {
         */
         Route::controller(ProductController::class)->group(function () {
             Route::post('add_to_cart', 'addToCart');
+            Route::post('update_cart', 'updateCart');
             Route::post('delete_in_cart', 'deleteProdcutInCart');
             Route::post('get_Cart_detail', 'getCartDetail');
             Route::post('delete_add_on_service_in_cart', 'deleteAddOnServiceInCart');
             Route::get('get_coupon', 'getCouponList');
         });
-        
+
 /*
         |--------------------------------------------------------------------------
         | AUTHORISATION ROUTE
@@ -120,13 +121,13 @@ Route::middleware('auth:api')->group(function () {
         Route::post('logout', 'logout');
     });
 
-    
+
     /*
         |--------------------------------------------------------------------------
         | PRODUCT CART ROUTE
         |--------------------------------------------------------------------------
         */
-        Route::controller(ProductController::class)->group(function () {            
+        Route::controller(ProductController::class)->group(function () {
             Route::get('delete_coupon', 'deleteCoupon');
             Route::post('apply_coupon', 'applyCoupon');
         });

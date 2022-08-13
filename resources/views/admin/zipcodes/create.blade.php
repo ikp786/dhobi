@@ -27,14 +27,20 @@
                             @csrf
                             <!-- <div class="row g-3 align-items-center"> -->
                             <div class="row">
-                                <div class="col-md-6"> 
-                                    <label class="form-label">Zipcode</label>                                    
+                                <div class="col-md-6">
+                                    <label class="form-label">Zipcode</label>
                                     {!! Form::number('zipcode', '', array('class' => 'form-control')) !!}
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Delivery Charge</label>
                                     {!! Form::number('delivery_charge', '', array('class' => 'form-control')) !!}
                                 </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Minimum Order Value</label>
+                                    {!! Form::number('minimum_order_value', '', array('class' => 'form-control')) !!}
+                                </div>
+
                                 <div class="col-md-6">
                                     <div class="card-header py-3 d-flex justify-content-between align-items-center bg-transparent border-bottom-0">
                                         <h6 class="m-0 fw-bold">Status</h6>
@@ -53,7 +59,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                </div>                                
+                                </div>
                                 <!-- <div class="col-md-6">
                                 <label class="form-label">Price</label>
                                 <button type="submit" class="btn btn-primary py-2 px-5 text-uppercase btn-set-task w-sm-100">Save</button>
@@ -66,7 +72,7 @@
                                     <button type="submit" class="btn btn-primary py-2 px-5 text-uppercase btn-set-task w-sm-100">Save</button>
                                 </div>
                             </div>
-                            
+
                             <!-- </div> -->
                         </form>
                     </div>
@@ -79,6 +85,6 @@
 @endsection
 @section('script')
 <script>
-    
+
 </script>
 @endsection

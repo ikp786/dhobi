@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\Category;
 use App\Models\OrderProduct;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class DriverOrderDetail extends JsonResource
@@ -17,6 +18,8 @@ class DriverOrderDetail extends JsonResource
      */
     public function toArray($request)
     {
+
+        $user = User::find($this->user_id);
 
         $categories =  OrderProduct::where('order_id', $this->id)->groupBy('category_id')->pluck('category_id');
         $product_data = [];
@@ -51,6 +54,9 @@ class DriverOrderDetail extends JsonResource
             'pickup_time'            => $this->pickup_time,
             'order_delivery_status'  => $this->order_delivery_status,
             'payment_method'         => $this->payment_method,
+            'username'               => $user->name,
+            'mobile'                 => $user->mobile,
+            'remark'                 => $this->remark ?? '',
             'address'                => new AddressCollection($this->addresses),
             'product_data'           => $product_array
         ];

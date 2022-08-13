@@ -17,6 +17,7 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('zipcode', 50);
             $table->decimal('delivery_charge', 8, 2)->default(0.00);
+            $table->decimal('minimum_order_value', 8, 2)->default(0.00);
             $table->integer('status')->default(0);
             $table->timestamps();
         });

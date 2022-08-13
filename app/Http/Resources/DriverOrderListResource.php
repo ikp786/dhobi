@@ -22,6 +22,7 @@ class DriverOrderListResource extends JsonResource
         return [
             'id'                     => $this->id,
             'username'               => $user->name,
+            'mobile'                 => $user->mobile,
             'order_id'               => $this->order_number,
             'sub_total_amount'       => $this->total_product_amount,
             'add_on_service_amount'  => $this->add_on_service_amount,
@@ -36,24 +37,26 @@ class DriverOrderListResource extends JsonResource
             'pickup_time'            => $this->pickup_time,
             'order_delivery_status'  => $this->order_delivery_status,
             'payment_method'         => $this->payment_method,
+            'remark'                 => $this->remark ?? '',
             'address'                => new AddressCollection($this->addresses),
+
         ];
 
-        $address = Address::find($this->address_id);
-        $product_name = OrderProduct::where('order_id', $this->id)->pluck('product_name')->join(',');
-        $data =  [
-            'id'                     => $this->id,
-            'order_id'               => $this->order_number,
-            'name'                   => isset($address->name) ? $address->name : '',
-            'product_name'           => $product_name,
-            'order_date'             => date('d/m/Y', strtotime($this->created_at)),
-            'pickup_date'            => date('d/m/Y', strtotime($this->pickup_date)),
-            'delivery_date'          => date('d/m/Y', strtotime($this->delivery_date)),
-            'pickup_time'            => $this->pickup_time,
-            'delivery_time'          => $this->delivery_time,
-            'order_delivery_status'  => $this->order_delivery_status,
-            'payment_method'         => $this->payment_method,
-            'total_amount'           => $this->order_amount
-        ];
+        // $address = Address::find($this->address_id);
+        // $product_name = OrderProduct::where('order_id', $this->id)->pluck('product_name')->join(',');
+        // $data =  [
+        //     'id'                     => $this->id,
+        //     'order_id'               => $this->order_number,
+        //     'name'                   => isset($address->name) ? $address->name : '',
+        //     'product_name'           => $product_name,
+        //     'order_date'             => date('d/m/Y', strtotime($this->created_at)),
+        //     'pickup_date'            => date('d/m/Y', strtotime($this->pickup_date)),
+        //     'delivery_date'          => date('d/m/Y', strtotime($this->delivery_date)),
+        //     'pickup_time'            => $this->pickup_time,
+        //     'delivery_time'          => $this->delivery_time,
+        //     'order_delivery_status'  => $this->order_delivery_status,
+        //     'payment_method'         => $this->payment_method,
+        //     'total_amount'           => $this->order_amount
+        // ];
     }
 }

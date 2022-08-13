@@ -57,7 +57,7 @@
                                 <tr>
                                     <th>Order Id</th>
                                     <th>User Name</th>
-                                    <th>Email</th>
+                                    {{--  <th>Email</th>  --}}
                                     <th>Mobile</th>
                                     <th>Order<br> Amount</th>
                                     <th>Payment<br> Method</th>
@@ -68,6 +68,7 @@
                                     <th>Deliver <br> Time</th>
                                     <th>Order <br> Status</th>
                                     <th>Payment <br> Status</th>
+                                    <th>Location</th>
                                     <th>Address</th>
                                     <th>Pincode</th>
                                     <th>Asign <br> Driver</th>
@@ -79,7 +80,7 @@
                                     <td><strong> <a href="{{route('admin.orders.order-product',$val->id)}}"> {{$val->order_number}}</a></strong></td>
 
                                     <td>{{$val->users->name}}</td>
-                                    <td>{{$val->users->email}}</td>
+                                    {{--  <td>{{$val->users->email}}</td>  --}}
                                     <td>{{$val->users->mobile}}</td>
                                     <td>₹ {{$val->order_amount}}</td>
                                     <td>{{$val->payment_method}}</td>
@@ -91,16 +92,19 @@
                                     <td>{{$val->delivery_time}}</td>
                                     <td>{{$val->order_delivery_status}}</td>
                                     <td>{{$val->payment_status}}</td>
+                                    <td>{{isset($val->addresses->location) ? $val->addresses->location : ''}}</td>
                                     <td>{{isset($val->addresses->address) ? $val->addresses->address : ''}}</td>
                                     <td>{{isset($val->addresses->pincode) ? $val->addresses->pincode : ''}}</td>
                                     <!-- <td>{{-- Form::select('driver_id', $drivers, $val->driver_id,['id'=>$val->id,'order_id'=>$val->id, 'class'=>'asign-driver', 'placeholder' =>'asign driver']) --}}</td> -->
                                     <td>
+                                        @if($val->order_delivery_status == "Pending" && $val->payment_status != "Failed")
                                         <select name="driver_id" id="{{$val->id}}" order_id="{{$val->id}}" class="asign-driver">
                                             <option value="">Asign Driver</option>
                                             @foreach($drivers as $driver)
                                             <option {{$driver->id == $val->driver_id ? 'selected' : '' }} value="{{$driver->id}}">{{$driver->name.' '.$driver->mobile}}</option>
                                             @endforeach
                                         </select>
+                                        @endif
                                     </td>
                                 </tr>
                                 @empty
@@ -125,7 +129,7 @@
                 // 'csvHtml5'
             ],
             order: [
-                [6, 'desc']
+                [5, 'desc']
             ]
         });
         $('.asign-driver').change(function() {

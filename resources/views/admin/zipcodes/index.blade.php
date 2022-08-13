@@ -28,9 +28,10 @@
                         <table id="myDataTable" class="table table-hover align-middle mb-0" style="width: 100%;">
                             <thead>
                                 <tr>
-                                    <th>Id</th>                                    
+                                    <th>Id</th>
                                     <th>Zipcode</th>
                                     <th>Delivery Charge</th>
+                                    <th>Minimum Order Value</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -38,16 +39,17 @@
                             <tbody>
                                 @forelse($zipcodes as $val)
                                 <tr>
-                                    <td class="td_text_align"><strong>{{$val->id}}</strong></a></td>                                    
+                                    <td class="td_text_align"><strong>{{$val->id}}</strong></a></td>
                                     <td class="td_text_align">{{$val->zipcode}}</td>
                                     <td class="td_text_align">₹ {{$val->delivery_charge}}</td>
+                                    <td class="td_text_align">₹ {{$val->minimum_order_value}}</td>
                                     <td>{{$val->status == 1 ? 'Published' : 'Unpublish'}}</td>
                                     <td class="td_text_align">
                                         <a class="btn-xs sharp me-1" href="{{ route('admin.zipcodes.edit',$val->id) }}"><i class="icofont-edit text-success"></i></a>
                                       {!! Form::open(['method' => 'DELETE','route' => ['admin.zipcodes.destroy', $val->id],'style'=>'display:inline']) !!}<button onclick="return confirm('Are you sure to delete Zipcode?')" class="delete btn-xs sharp" type="submit"><i class="icofont-ui-delete text-danger"></i> </button>
-                                        {!! Form::close() !!} 
+                                        {!! Form::close() !!}
                                     </td>
-                                    
+
                                 </tr>
                                 @empty
                                 @endforelse
@@ -62,6 +64,6 @@
 @endsection
 @section('script')
 <script>
-   
+
 </script>
 @endsection

@@ -45,6 +45,7 @@ class ZipCodeController extends Controller
         $this->validate($request, [
             'zipcode'               => 'required|integer|digits:6',
             'delivery_charge'       => 'required|numeric|digits_between:1,8',
+            'minimum_order_value'   => 'required|numeric|digits_between:1,8',
         ]);
 
         $input = $request->all();
@@ -96,6 +97,7 @@ class ZipCodeController extends Controller
     {
         $this->validate($request, [
             'zipcode'               => 'required|integer|digits:6',
+            'minimum_order_value'   => 'required|numeric|digits_between:1,8',
             'delivery_charge'       => 'required|numeric|digits_between:1,8',
         ]);
 

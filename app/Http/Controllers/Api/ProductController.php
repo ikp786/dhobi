@@ -29,6 +29,7 @@ use App\Models\User;
 use App\Models\ZipCode;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends BaseController
@@ -36,6 +37,9 @@ class ProductController extends BaseController
     public function userDashboard(Request $request)
     {
         try {
+            if (isset($request->user_id) && $request->user_id != '') {
+                Auth::loginUsingId($request->user_id);
+            }
             $userData = User::find($request->user_id);
             $user_id = isset($userData->id) ? $userData->id : '';
             $cagetory_list = Category::OrderBy('name', 'asc')->where('status', 1)->limit(10)->get(['id', 'name', 'image']);
@@ -57,7 +61,7 @@ class ProductController extends BaseController
     public function getCategoryList()
     {
         try {
-            $cagetory_list = Category::OrderBy('name', 'asc')->where('status', 1)->get(['id', 'name', 'image']);
+            $cagetory_list = Category::OrderBy('id', 'asc')->where('status', 1)->get(['id', 'name', 'image']);
             if (!isset($cagetory_list) || count($cagetory_list) == 0) {
                 return $this->sendFailed('CATEGORY NOT FOUND', 200);
             }
@@ -70,7 +74,7 @@ class ProductController extends BaseController
     public function getSubCategoryByCategory($id)
     {
         try {
-            $cagetory_list = SubCategory::OrderBy('name', 'asc')->where(['status' => 1, 'category_id' => $id])->get(['id', 'name', 'category_id']);
+            $cagetory_list = SubCategory::OrderBy('id', 'asc')->where(['status' => 1, 'category_id' => $id])->get(['id', 'name', 'category_id']);
             if (!isset($cagetory_list) || count($cagetory_list) == 0) {
                 return $this->sendFailed('SUB CATEGORY NOT FOUND', 200);
             }
@@ -265,7 +269,7 @@ class ProductController extends BaseController
 
 
             $data = json_encode($request->all());
-			\DB::table('tests')->insert(['log' => $data]);
+            \DB::table('tests')->insert(['log' => $data]);
 
             $products  = Product::find($request->product_id);
             if (!isset($products) || empty($products)) {
@@ -361,6 +365,107 @@ class ProductController extends BaseController
             return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
         }
     }
+
+    function updateCart(AddToCartRequest $request)
+    {
+        try {
+
+            $products  = Product::find($request->product_id);
+            if (!isset($products) || empty($products)) {
+                return $this->sendFailed('PRODUCT ID NOT FOUND', 200);
+            }
+            $add_on_service = explode(",", $request->add_on_services);
+            sort($add_on_service);
+
+            $couponExist = CouponCartMapping::where('device_token', $request->device_token)->first();
+            if (isset($couponExist->id)) {
+                $couponExist->delete();
+            }
+            // CHEK THIS PRODUCT ALREADY ADDED OR NOT IN CART
+            if (!empty($add_on_service)) {
+                $checkExist = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token, "add_on_services" => implode(",", $add_on_service)])->orderBy('created_at', 'desc')->first();
+            } else {
+                $checkExist = Cart::where(['product_id' => $request->product_id, 'device_token' => $request->device_token, "add_on_services" => null])->orderBy('created_at', 'desc')->first();
+            }
+
+
+
+
+            // dd($AddOnServiceMappingInCart);
+            if (isset($checkExist) && !empty($checkExist)) {
+                // ADD PRODUCT IN CART
+                $product_quantity = $checkExist->product_quantity + $request->product_quantity;
+                $add_to_cart = $checkExist; //new Cart();
+                $add_to_cart->fill($request->only('product_id', 'category_id', 'product_quantity', 'user_id', 'device_token'));
+                $add_to_cart->product_quantity    = $product_quantity;
+                $add_to_cart->product_amount      = $products->price;
+                $add_to_cart->sub_category_id     = $products->sub_category_id;
+                $add_to_cart->total_amount        = $products->price * $product_quantity;
+                $add_to_cart->product_name        = $products->name;
+                $add_to_cart->add_on_services     = implode(",", $add_on_service);
+
+
+                $add_to_cart->save();
+                if (isset($request->add_on_services)) {
+                    $add_on_service = explode(",", $request->add_on_services);
+                    foreach ($add_on_service as $key => $val) {
+                        $chekSer = AddOnService::find($val);
+                        if (isset($chekSer->id)) {
+                            $checkAddOnServiceExists = AddOnServiceMappingInCart::where(['cart_id' => $add_to_cart->id, 'product_id' => $request->product_id, 'add_on_service_id' => $val, 'device_token' => $request->device_token])->first();
+                            if (isset($checkAddOnServiceExists->id)) {
+                                $addService = $checkAddOnServiceExists;
+                            } else {
+                                $addService                = new AddOnServiceMappingInCart();
+                            }
+                            $addService->cart_id           = $add_to_cart->id;
+                            $addService->user_id           = $request->user_id;
+                            $addService->device_token      = $request->device_token;
+                            $addService->product_id        = $products->id;
+                            $addService->add_on_service_id = $val;
+                            $addService->save();
+                        }
+                    }
+                }
+            } elseif (empty($checkExist)) {
+
+
+                $add_to_cart = new Cart();
+                $add_to_cart->fill($request->only('product_id', 'category_id', 'product_quantity', 'user_id', 'device_token'));
+                $add_to_cart->product_amount      = $products->price;
+                $add_to_cart->sub_category_id     = $products->sub_category_id;
+                $add_to_cart->total_amount        = $products->price * $request->product_quantity;
+                $add_to_cart->product_name        = $products->name;
+                $add_to_cart->add_on_services     = implode(",", $add_on_service);
+                $add_to_cart->save();
+                if (isset($request->add_on_services)) {
+                    $add_on_service = explode(",", $request->add_on_services);
+                    foreach ($add_on_service as $key => $val) {
+                        $chekSer = AddOnService::find($val);
+                        if (isset($chekSer->id)) {
+
+                            $checkAddOnServiceExists = AddOnServiceMappingInCart::where(['cart_id' => $add_to_cart->id, 'product_id' => $request->product_id, 'add_on_service_id' => $val, 'device_token' => $request->device_token])->first();
+                            if (isset($checkAddOnServiceExists->id)) {
+                                $addService = $checkAddOnServiceExists;
+                            } else {
+                                $addService                = new AddOnServiceMappingInCart();
+                            }
+                            $addService->cart_id           = $add_to_cart->id;
+                            $addService->user_id           = $request->user_id;
+                            $addService->device_token      = $request->device_token;
+                            $addService->product_id        = $products->id;
+                            $addService->add_on_service_id = $val;
+                            $addService->save();
+                        }
+                    }
+                }
+            }
+            $product_count   = Cart::where('device_token', $request->device_token)->sum('product_quantity');
+            return $this->sendSuccess('PRODCUT ADDED IN CARD SUCCESSFULLY', ['product_count' => $product_count]);
+        } catch (\Throwable $e) {
+            return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
+        }
+    }
+
     function addToCartold(AddToCartRequest $request)
     {
         try {
@@ -604,6 +709,27 @@ class ProductController extends BaseController
             return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
         }
     }
+
+    public function disbursements()
+    {
+        $response =  Http::get(env('API_URL') . 'loan_application/getAllLoanApplications?status=Approved');
+        $data = isset($response['data']) ?  $response['data'] : '';
+        if ($response['success']) {
+            $new_arr = array();
+            foreach ($data as $key => $val) {
+                $scheme_id = isset($val['scheme_id']) ? $val['scheme_id'] : '';
+                $response1 =  Http::get(env('API_URL') . 'scheme/getSchemeDetails?scheme_id=' . $scheme_id);
+                $data1 =  isset($response1['data'][0]) ?  $response1['data'][0] : '';
+                $new_arr[$key] = $val;
+                $new_arr[$key]['scheme_id'] = isset($data1['scheme_id']) ? $data1['scheme_id'] : '';
+                $new_arr[$key]['scheme_name'] = isset($data1['scheme_name']) ? $data1['scheme_name'] : '';
+            }
+            return view('gold_loan.disbursements', ['getAllDisbursement' => $new_arr]);
+        } else {
+            return view('gold_loan.disbursements');
+        }
+    }
+
     public function getCartDetail(Request $request)
     {
         try {
@@ -632,15 +758,14 @@ class ProductController extends BaseController
             $product_array = [];
             $category_name = '';
             $total_price_product = 0;
-
+            $total_add_on_service_prices = 0;
             foreach ($categories as $key =>  $category) {
-                $product_data       = [];
                 $sub_categories     = Cart::where(['category_id' => $category, 'device_token' => $request->device_token])->groupBy('sub_category_id')->pluck('sub_category_id');
                 $category_name      = Category::where('id', $category)->value('name');
 
-
                 $subb_cat_arr = [];
                 foreach ($sub_categories as $sub_category_key => $sub_category) {
+                    $product_data       = [];
                     $sub_category_name  = SubCategory::where('id', $sub_category)->value('name');
 
                     $cart_data     = Cart::where('device_token', $request->device_token)->where(['category_id' => $category, 'sub_category_id' => $sub_category])->get();
@@ -648,34 +773,35 @@ class ProductController extends BaseController
                         $p_data = Product::find($cart->product_id);
                         $add_on_service_ids  = AddOnServiceMappingInCart::where(['cart_id' => $cart->id])->pluck('add_on_service_id')->join(',');
                         $add_on_service_arr  = AddOnService::select('id', 'price', 'title')->whereIn('id', explode(',', $add_on_service_ids))->get()->toArray();
-                        $add_on_service_price = array_sum(array_column($add_on_service_arr, 'price'));
+                        $add_on_service_price = array_sum(array_column($add_on_service_arr, 'price')) * $cart->product_quantity;
+                        $add_on_serviceAr2 = [];
+                        foreach ($add_on_service_arr as $add_on_serviceAr) {
+
+                            $add_on_serviceAr['total_add_on_service_price']  = $add_on_serviceAr['price'] * $cart->product_quantity;
+                            $add_on_serviceAr2[] = $add_on_serviceAr;
+                        }
+                        $add_on_service_arr = $add_on_serviceAr2;
+
+                        $total_add_on_service_prices = $total_add_on_service_prices + $add_on_service_price;
                         $p_image        =  asset('storage/app/public/product_images/' . $p_data->image);
-                        $product_data[$key1] = ['cart_id' => $cart->id, 'product_id' => $p_data->id, 'product_name' => $p_data->name, 'product_image' => $p_image, 'per_product_price' => $p_data->price, 'product_total_per' => $p_data->price * $cart->product_quantity, 'product_quantity' => $cart->product_quantity, 'category_id' => $category, 'sub_category_id' => $cart->sub_category_id, 'add_on_services' => $add_on_service_arr, 'add_on_service_price' => $add_on_service_price];
+                        $product_data[$key1] = ['cart_id' => $cart->id, 'product_id' => $p_data->id, 'product_name' => $p_data->name, 'product_image' => $p_image, 'per_product_price' => $p_data->price, 'product_total_per' => ( $p_data->price * $cart->product_quantity ) + $add_on_service_price, 'product_quantity' => $cart->product_quantity, 'category_id' => $category, 'sub_category_id' => $cart->sub_category_id, 'add_on_services' => $add_on_service_arr, 'add_on_service_price' => $add_on_service_price];
                         $total_price_product = $total_price_product + $p_data->price * $cart->product_quantity;
                     }
-
-
-
                     $subb_cat_arr[] = [
                         "sub_category_name" => $sub_category_name,
                         "product" => $product_data
                     ];
-
                     $product_array[$key]['category_name'] = $category_name;
                     $product_array[$key]['sub_category'] = $subb_cat_arr;
-                    // $product_array[$key][$sub_category_key]['sub_category_name'] = $sub_category_name;
-                    // $product_array[$key][$sub_category_key]['product'] = $product_data;
-
                 }
-                // $product_array = array_values($product_array);
             }
 
-            $total_add_on_service_ids   = AddOnServiceMappingInCart::where(['device_token' => $request->device_token])->get('add_on_service_id');
-            $total_add_on_service_price = 0;
-            foreach ($total_add_on_service_ids as $key => $value2) {
-                $serice = AddOnService::find($value2->add_on_service_id);
-                $total_add_on_service_price = $total_add_on_service_price + $serice->price;
-            }
+            // $total_add_on_service_ids   = AddOnServiceMappingInCart::where(['device_token' => $request->device_token])->get('add_on_service_id');
+            // $total_add_on_service_price = 0;
+            // foreach ($total_add_on_service_ids as $key => $value2) {
+            //     $serice = AddOnService::find($value2->add_on_service_id);
+            //     $total_add_on_service_price = $total_add_on_service_price + $serice->price;
+            // }
             $total_sum = 0;
             $get_cart_data1  = Cart::where(['device_token' => $request->device_token])->get();
             $product_count   = Cart::where('device_token', $request->device_token)->sum('product_quantity');
@@ -702,7 +828,7 @@ class ProductController extends BaseController
             $discount_percentage = CouponCartMapping::where(['user_id' => $request->user_id])->value('discount_percentage');
             $max_discount_amount = CouponCartMapping::where(['user_id' => $request->user_id])->value('max_discount_amount');
 
-            $discount            = round(($total_sum + $total_add_on_service_price) / 100 * $discount_percentage, 2);
+            $discount            = round(($total_sum + $total_add_on_service_prices) / 100 * $discount_percentage, 2);
 
             if ($discount >= $max_discount_amount) {
                 $discount = $max_discount_amount;
@@ -717,9 +843,14 @@ class ProductController extends BaseController
                 $coupon_code = '';
             }
             $delivery_charge                = isset($checkExist->delivery_charge) ? $checkExist->delivery_charge : 0;
-            $total_amount = $delivery_charge + $total_sum + $total_add_on_service_price - $discount;
-            $discount_message  = '10% Discount';
-            $data = ['cart_data' => $product_array, 'product_count' => $product_count, 'add_on_service_charge' => $total_add_on_service_price, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'discount_message' => $discount_message, 'address' => $address];
+            $minimum_order_value            = isset($checkExist->minimum_order_value) ? $checkExist->minimum_order_value : 0;
+            $total_product_and_service_amt  = $total_sum + $total_add_on_service_prices;
+            if ($total_product_and_service_amt >= $minimum_order_value) {
+                $delivery_charge = 0;
+            }
+            $total_amount = $delivery_charge + $total_sum + $total_add_on_service_prices - $discount;
+            $discount_message  = '5% Discount';
+            $data = ['cart_data' => $product_array, 'product_count' => $product_count, 'add_on_service_charge' => $total_add_on_service_prices, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'discount_message' => $discount_message, 'address' => $address];
             return $this->sendSuccess('CART DATA GET SUCCESSFULLY', $data);
         } catch (\Throwable $e) {
             return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
@@ -728,7 +859,7 @@ class ProductController extends BaseController
     public function getTimeSlot(Request $request)
     {
         try {
-            $cagetory_list = TimeSlot::select('from', 'to', 'id')->get();
+            $cagetory_list = TimeSlot::where('status', 1)->select('from', 'to', 'id')->get();
             if (!isset($cagetory_list) || count($cagetory_list) == 0) {
                 return $this->sendFailed('TIMESLOT NOT FOUND', 200);
             }
@@ -748,6 +879,7 @@ class ProductController extends BaseController
             $product_array = [];
             $category_name = '';
             $total_price_product = 0;
+            $total_add_on_service_prices = 0;
             foreach ($categories as $key =>  $category) {
                 $product_data = [];
                 $category_name =  Category::where('id', $category)->value('name');
@@ -757,7 +889,8 @@ class ProductController extends BaseController
                     $add_on_service_ids  = AddOnServiceMappingInCart::where(['cart_id' => $cart->id])->pluck('add_on_service_id')->join(',');
 
                     $add_on_service_arr  = AddOnService::select('id', 'price', 'title')->whereIn('id', explode(',', $add_on_service_ids))->get()->toArray();
-                    $add_on_service_price = array_sum(array_column($add_on_service_arr, 'price'));
+                    $add_on_service_price = array_sum(array_column($add_on_service_arr, 'price')) * $cart->product_quantity;
+                    $total_add_on_service_prices = $total_add_on_service_prices + $add_on_service_price;
                     $p_image        =  asset('storage/app/public/product_images/' . $p_data->image);
                     $product_data[$key1] = ['cart_id' => $cart->id, 'product_id' => $p_data->id, 'product_name' => $p_data->name, 'product_image' => $p_image, 'per_product_price' => $p_data->price, 'product_total_per' => $p_data->price * $cart->product_quantity, 'product_quantity' => $cart->product_quantity, 'category_id' => $category, 'add_on_services' => $add_on_service_arr, 'add_on_service_price' => $add_on_service_price];
                     $total_price_product = $total_price_product + $p_data->price * $cart->product_quantity;
@@ -765,13 +898,13 @@ class ProductController extends BaseController
                 $product_array[$key]['category_name'] = $category_name;
                 $product_array[$key]['product'] = $product_data;
             }
-            $total_add_on_service_ids   = AddOnServiceMappingInCart::where(['user_id' => $request->user_id])->get('add_on_service_id');
+            // $total_add_on_service_ids   = AddOnServiceMappingInCart::where(['user_id' => $request->user_id])->get('add_on_service_id');
 
-            $total_add_on_service_price = 0;
-            foreach ($total_add_on_service_ids as $key => $value2) {
-                $serice = AddOnService::find($value2->add_on_service_id);
-                $total_add_on_service_price = $total_add_on_service_price + $serice->price;
-            }
+            // $total_add_on_service_price = 0;
+            // foreach ($total_add_on_service_ids as $key => $value2) {
+            //     $serice = AddOnService::find($value2->add_on_service_id);
+            //     $total_add_on_service_price = $total_add_on_service_price + $serice->price;
+            // }
 
             $total_sum = 0;
             $get_cart_data1  = Cart::where(['user_id' => $request->user_id])->get();
@@ -798,7 +931,7 @@ class ProductController extends BaseController
             $discount            = 0;
             $discount_percentage = CouponCartMapping::where(['user_id' => $request->user_id])->value('discount_percentage');
             $max_discount_amount = CouponCartMapping::where(['user_id' => $request->user_id])->value('max_discount_amount');
-            $discount            = round(($total_sum + $total_add_on_service_price) / 100 * $discount_percentage, 2);
+            $discount            = round(($total_sum + $total_add_on_service_prices) / 100 * $discount_percentage, 2);
 
             if ($discount >= $max_discount_amount) {
                 $discount = $max_discount_amount;
@@ -812,8 +945,13 @@ class ProductController extends BaseController
                 $coupon_code = '';
             }
             $delivery_charge                = isset($checkExist->delivery_charge) ? $checkExist->delivery_charge : 0;
-            $total_amount = $delivery_charge + $total_sum + $total_add_on_service_price - $discount;
-            return $this->sendSuccess('TIMESLOT GET SUCCESSFULLY', ['sloat' => TimeSlotResource::collection($cagetory_list), 'add_on_service_charge' => $total_add_on_service_price, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'address' => $address]);
+            $minimum_order_value            = isset($checkExist->minimum_order_value) ? $checkExist->minimum_order_value : 0;
+            $total_product_and_service_amt  = $total_sum + $total_add_on_service_prices;
+            if ($total_product_and_service_amt >= $minimum_order_value) {
+                $delivery_charge = 0;
+            }
+            $total_amount = $delivery_charge + $total_sum + $total_add_on_service_prices - $discount;
+            return $this->sendSuccess('TIMESLOT GET SUCCESSFULLY', ['sloat' => TimeSlotResource::collection($cagetory_list), 'add_on_service_charge' => $total_add_on_service_prices, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'address' => $address]);
         } catch (\Throwable $e) {
             return $this->sendFailed($e->getMessage() . ' on line ' . $e->getLine(), 400);
         }

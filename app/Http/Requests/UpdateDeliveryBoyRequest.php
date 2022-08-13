@@ -25,9 +25,10 @@ class UpdateDeliveryBoyRequest extends FormRequest
     {
         return [
             'name'           => 'required',
-            'mobile'         => 'required|unique:users,mobile,'.$this->id.'|numeric|digits_between:10,13',
-            'email'          => 'required|email|unique:users,email,'.$this->id,
-            // 'password'       => 'required',            
+            'email'         => 'nullable|email|unique:users,email,' . $this->id . ',id,role,3',
+            'mobile'         => 'required|unique:users,mobile,'.$this->id.',id,role,3|numeric|digits_between:10,13',
+            // 'email'          => 'required|email|unique:users,email,'.$this->id,
+            // 'password'       => 'required',
         ];
     }
 }
