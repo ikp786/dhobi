@@ -122,6 +122,9 @@ class OrderController extends Controller
         $data1       =  compact('title', 'orders', 'product_data');
 
         $data = ['title' => 'Welcome to jploft.com'];
+
+        //$pdf = PDF::loadView('admin.orders.pdf', $data1)->setOptions([ 'isRemoteEnabled' => true,'defaultFont' => 'sans-serif']);
+
         $pdf = PDF::loadView('admin.orders.pdf', $data1)->setOptions(['defaultFont' => 'sans-serif']);
         return $pdf->download('CLEANZI Order('.date('Y-m-d') . ').pdf');
     }

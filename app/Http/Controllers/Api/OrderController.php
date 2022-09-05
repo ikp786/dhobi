@@ -130,7 +130,7 @@ class OrderController extends BaseController
 
                 $add_on_service_arr    = AddOnService::select('id', 'price', 'title')->whereIn('id', explode(',', $add_on_service_ids))->get()->toArray();
                 // CALCULATE ADDONSERVICE AMOUNT
-                $add_on_service_pricess  = ($add_on_service_pricess + array_sum(array_column($add_on_service_arr, 'price'))) * $value->product_quantity;
+                $add_on_service_pricess  = $add_on_service_pricess + (array_sum(array_column($add_on_service_arr, 'price')) * $value->product_quantity);
             }
             // GET MINIMUM ORDER VALUE
             $minimum_order_value            = isset($checkExist->minimum_order_value) ? $checkExist->minimum_order_value : 0;
@@ -249,7 +249,7 @@ class OrderController extends BaseController
             }
 
             if ($request->payment_method == 'Online') {
-                $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRATE'));
+                $api = new Api(env('RAZORPAY_KEY_ID','rzp_test_lfnHHbiop019HN'), env('RAZORPAY_KEY_SECRATE','tdKbUB1f2OwGIXYZB6bGVH73'));
                 $orderData = [
                     'receipt'         => 'rcptid_11',
                     'amount'          => ($total_amounts) * 100, // 39900 rupees in paise

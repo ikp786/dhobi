@@ -871,10 +871,10 @@ class ProductController extends BaseController
 
             if (isset($request->user_id) && $request->user_id != '') {
                 Cart::where('user_id', $request->user_id)->update(['user_id' => $request->user_id]);
-                AddOnServiceMappingInCart::where('user_id', $request->user_id)->update(['user_id' => $request->user_id]);
+                AddOnServiceMappingInCart::where('user_id', $request->user_id)->where('device_token', $request->device_token)->update(['user_id' => $request->user_id,'device_token' => $request->device_token]);
             }
 
-            $categories =  Cart::where('user_id', $request->user_id)->groupBy('category_id')->pluck('category_id');
+            $categories =  Cart::where('user_id', $request->user_id)->where('device_token', $request->device_token)->groupBy('category_id')->pluck('category_id');
 
             $product_array = [];
             $category_name = '';
@@ -883,7 +883,7 @@ class ProductController extends BaseController
             foreach ($categories as $key =>  $category) {
                 $product_data = [];
                 $category_name =  Category::where('id', $category)->value('name');
-                $cart_data  =  Cart::where('user_id', $request->user_id)->where('category_id', $category)->get();
+                $cart_data  =  Cart::where('user_id', $request->user_id)->where('device_token', $request->device_token)->where('category_id', $category)->get();
                 foreach ($cart_data as $key1 => $cart) {
                     $p_data = Product::find($cart->product_id);
                     $add_on_service_ids  = AddOnServiceMappingInCart::where(['cart_id' => $cart->id])->pluck('add_on_service_id')->join(',');
@@ -907,7 +907,7 @@ class ProductController extends BaseController
             // }
 
             $total_sum = 0;
-            $get_cart_data1  = Cart::where(['user_id' => $request->user_id])->get();
+            $get_cart_data1  = Cart::where(['user_id' => $request->user_id])->where('device_token', $request->device_token)->get();
             $product_count   = count($get_cart_data1);
             foreach ($get_cart_data1 as $key => $value1) {
                 $products = Product::find($value1->product_id);
@@ -929,8 +929,8 @@ class ProductController extends BaseController
             ];
             $checkExist  = ZipCode::where('zipcode', @$get_address->pincode)->first();
             $discount            = 0;
-            $discount_percentage = CouponCartMapping::where(['user_id' => $request->user_id])->value('discount_percentage');
-            $max_discount_amount = CouponCartMapping::where(['user_id' => $request->user_id])->value('max_discount_amount');
+            $discount_percentage = CouponCartMapping::where(['user_id' => $request->user_id])->where('device_token', $request->device_token)->value('discount_percentage');
+            $max_discount_amount = CouponCartMapping::where(['user_id' => $request->user_id])->where('device_token', $request->device_token)->value('max_discount_amount');
             $discount            = round(($total_sum + $total_add_on_service_prices) / 100 * $discount_percentage, 2);
 
             if ($discount >= $max_discount_amount) {
@@ -940,7 +940,7 @@ class ProductController extends BaseController
             if (!isset($discount) || $discount == '') {
                 $discount = 0;
             }
-            $coupon_code = CouponCartMapping::where(['user_id' => $request->user_id])->value('coupon_code');
+            $coupon_code = CouponCartMapping::where(['user_id' => $request->user_id])->where('device_token', $request->device_token)->value('coupon_code');
             if (!isset($coupon_code) || $coupon_code == '') {
                 $coupon_code = '';
             }
@@ -949,6 +949,10 @@ class ProductController extends BaseController
             $total_product_and_service_amt  = $total_sum + $total_add_on_service_prices;
             if ($total_product_and_service_amt >= $minimum_order_value) {
                 $delivery_charge = 0;
+            }
+            if($total_product_and_service_amt == 0){
+                $delivery_charge = 0;
+
             }
             $total_amount = $delivery_charge + $total_sum + $total_add_on_service_prices - $discount;
             return $this->sendSuccess('TIMESLOT GET SUCCESSFULLY', ['sloat' => TimeSlotResource::collection($cagetory_list), 'add_on_service_charge' => $total_add_on_service_prices, 'delivery_charge' => $delivery_charge, 'sub_total' => $total_price_product, 'coupon_discount' => $discount, 'coupon_code' => $coupon_code, 'total_order_sum' => $total_amount, 'address' => $address]);
